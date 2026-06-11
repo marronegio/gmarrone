@@ -10,7 +10,7 @@ import {
 const { useEffect } = React;
 
 const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
-  "accent": "#4d9bff",
+  "accent": "#4d9bff" ,
   "dark": true,
   "density": "regular",
   "heroVariant": "v2"
