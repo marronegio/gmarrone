@@ -175,6 +175,8 @@ p { margin: 0; color: var(--ink-2); }
 .nav-links a:hover { color: var(--ink); }
 @media (max-width: 760px) {
   .nav-links { display: none; }
+  /* sticky em vez de fixed no mobile pra não cobrir/cortar a hero */
+  .nav { position: sticky; }
 }
 
 /* ── Buttons ──────────────────────────── */
@@ -286,6 +288,37 @@ p { margin: 0; color: var(--ink-2); }
 .btn .arrow { transition: transform .2s ease; display: inline-block; }
 .btn:hover .arrow { transform: translateX(3px); }
 
+/* ── Botões: responsividade mobile ────────── */
+@media (max-width: 640px) {
+  /* deixa rótulos longos (ex: WhatsApp) quebrarem em vez de estourar a largura */
+  .btn {
+    white-space: normal;
+    text-align: center;
+    max-width: 100%;
+  }
+  .btn-lg { padding: 16px 20px; font-size: 15px; }
+
+  /* grupos de ação empilham e ocupam a largura toda */
+  .hero-v1 .hero-actions,
+  .hero-v2 .hero-actions,
+  .hero-v3 .hero-actions,
+  .cta-card .actions {
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+  }
+  .cta-card .actions { display: flex; }
+  .hero-v1 .hero-actions .btn,
+  .hero-v2 .hero-actions .btn,
+  .hero-v3 .hero-actions .btn,
+  .cta-card .actions .btn {
+    width: 100%;
+    justify-content: center;
+  }
+  /* impede o ícone do WhatsApp de encolher/desalinhar quando o texto quebra */
+  .btn .wa { flex: 0 0 auto; }
+}
+
 /* ── Hero ─────────────────────────────── */
 .hero {
   padding-top: 150px;
@@ -351,13 +384,22 @@ p { margin: 0; color: var(--ink-2); }
 .hero > .container { position: relative; z-index: 3; }
 
 @media (max-width: 800px) {
+  .hero-bg {
+    /* espaço que sobra abaixo da imagem fica preto */
+    background: #000;
+  }
   .hero-bg img {
-    object-position: center top;
+    /* ocupa só a largura total, altura natural, ancorada ao topo */
+    height: auto;
+    top: 0;
+    bottom: auto;
+    object-fit: contain;
+    object-position: top center;
     opacity: 0.95;
     filter: saturate(0.9) contrast(1.05);
   }
   .hero-v2 {
-    padding-top: clamp(500px, 75vh, 820px);
+    padding-top: 300px !important;
     padding-bottom: 56px;
     min-height: 100svh;
   }
@@ -369,9 +411,9 @@ p { margin: 0; color: var(--ink-2); }
       linear-gradient(180deg,
         transparent 0%,
         transparent 52%,
-        color-mix(in oklab, var(--bg) 35%, transparent) 64%,
-        color-mix(in oklab, var(--bg) 80%, transparent) 78%,
-        var(--bg) 92%);
+        color-mix(in oklab, #000 35%, transparent) 64%,
+        color-mix(in oklab, #000 80%, transparent) 78%,
+        #000 92%);
   }
   .hero-bg::after {
     background:

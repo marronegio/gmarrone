@@ -481,21 +481,21 @@ function Types() {
 const PORTFOLIO = [
 {
   namePrefix: "Dra. Eduarda", nameAccent: "Costa",
-  url: "draeduardacosta.com.br",
+  url: "https://dreduardacosta.com.br/",
   img: "assets/portfolio/eduarda-costa.png",
   tags: ["Landing Page", "Estética Regenerativa"],
   desc: "Landing page para enfermeira especialista em Estética Regenerativa, com copy sofisticada, tom acessível e captação via WhatsApp."
 },
 {
   namePrefix: "Bettina", nameAccent: "Rudolph",
-  url: "bettinarudolph.com.br",
+  url: "https://zd.bettinarudolph.com.br/do-zero-ao-digital-fazedor-ia-oportunidade-especial-v2/",
   img: "assets/portfolio/bettina-rudolph.png",
   tags: ["Landing Page", "Infoproduto"],
   desc: "Landing Page do carro-chefe da expert e infoprodutora, o Do Zero ao Digital. Estrutura pensada pra alta conversão em campanhas pagas."
 },
 {
   namePrefix: "Juliane", nameAccent: "Marrone",
-  url: "julianemarrone.com.br",
+  url: "https://nutrijumarrone.com.br/",
   img: "assets/portfolio/juliane-marrone.png",
   tags: ["Landing Page", "Nutrição"],
   desc: "Landing Page de alta conversão para nutricionista especialista em envelhecimento, seguindo identidade visual da marca."
@@ -539,7 +539,7 @@ function Proof() {
                 {p.namePrefix} <span className="portfolio-name-accent">{p.nameAccent}</span>
               </h3>
               <p className="portfolio-desc">{p.desc}</p>
-              <a className="portfolio-link" href={`https://${p.url}`} target="_blank" rel="noreferrer">
+              <a className="portfolio-link" href={`${p.url}`} target="_blank" rel="noreferrer">
                 Ver projeto <span className="arrow">↗</span>
               </a>
             </Reveal>
@@ -696,7 +696,7 @@ function CTA() {
 
             <div className="actions" style={{ marginTop: 36 }}>
               <a
-                href="https://wa.me/5500000000000?text=Oi%20Giovanne%2C%20quero%20o%20diagn%C3%B3stico%20gratuito%20do%20meu%20site."
+                href="https://wa.me/5551996574342?text=Oi%20Giovanne%2C%20quero%20o%20diagn%C3%B3stico%20gratuito%20do%20meu%20site."
                 target="_blank" rel="noopener"
                 className="btn btn-primary btn-lg">
                 
