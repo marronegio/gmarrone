@@ -10,11 +10,11 @@ import {
 const { useEffect } = React;
 
 const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
-  "accent": "#4d9bff" ,
+  "accent": "#4d9bff",
   "dark": true,
   "density": "regular",
   "heroVariant": "v2"
-}/*EDITMODE-END*/;
+}/*EDITMODE-END */;
 
 // Map accent → matching glow + ink (contrast)
 const ACCENT_PRESETS = {
