@@ -1,4 +1,12 @@
-/* global React, ReactDOM */
+import React from "react";
+import {
+  Nav, HeroV1, HeroV2, HeroV3,
+  Problem, Solution, Types, Proof, About, FAQ, CTA, Footer
+} from "./sections.jsx";
+import {
+  useTweaks, TweaksPanel, TweakSection, TweakToggle, TweakColor, TweakRadio
+} from "./tweaks-panel.jsx";
+
 const { useEffect } = React;
 
 const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
@@ -110,4 +118,4 @@ function App() {
   );
 }
 
-ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+export default App;

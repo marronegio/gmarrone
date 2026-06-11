@@ -1,4 +1,4 @@
-/* global React */
+import React from "react";
 const { useState, useEffect, useRef } = React;
 
 // ─── Helpers ────────────────────────────────────────────────
@@ -739,8 +739,8 @@ function Footer() {
 
 }
 
-// Make available to app.jsx
-Object.assign(window, {
+// Make available to App.jsx
+export {
   Nav, HeroV1, HeroV2, HeroV3,
   Problem, Solution, Types, Proof, About, FAQ, CTA, Footer
-});
+};
