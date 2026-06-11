@@ -64,7 +64,7 @@ function Nav() {
     <nav className={`nav${scrolled ? " scrolled" : ""}`}>
       <div className="container nav-inner">
         <a href="#" className="brand">
-          <img src="assets/logo.png" alt="Giovanne Marrone" className="brand-logo" />
+          <img src="assets/logo.webp" alt="Giovanne Marrone" className="brand-logo" />
           <span className="brand-text">
             <span className="name">Giovanne Marrone</span>
             <span className="role">web designer</span>
@@ -86,12 +86,12 @@ function Nav() {
 }
 
 const CLIENTS = [
-{ name: "Dra. Eduarda Costa", img: "assets/clients/eduarda.jpg" },
+{ name: "Dra. Eduarda Costa", img: "assets/clients/eduarda.webp" },
 { name: "Nutri Juliane Marrone", img: "assets/clients/juliane.webp" },
-{ name: "Grupo Líbertas", img: "assets/clients/libertas.jpg" },
-{ name: "IGT International Coaching", img: "assets/clients/igt.png" },
-{ name: "Bettina Rudolph", img: "assets/clients/bettina.jpg" },
-{ name: "Geronimo Theml", img: "assets/clients/geronimo.jpg" }];
+{ name: "Grupo Líbertas", img: "assets/clients/libertas.webp" },
+{ name: "IGT International Coaching", img: "assets/clients/igt.webp" },
+{ name: "Bettina Rudolph", img: "assets/clients/bettina.webp" },
+{ name: "Geronimo Theml", img: "assets/clients/geronimo.webp" }];
 
 
 function TrustStack() {
@@ -118,8 +118,9 @@ function HeroBg() {
   return (
     <div className="hero-bg" aria-hidden="true">
       <picture>
-        <source media="(max-width: 800px)" srcSet="assets/giovanne-portrait-mobile.png" />
-        <img src="assets/giovanne-portrait.png" alt="" />
+        <source media="(max-width: 800px)" srcSet="assets/giovanne-portrait-mobile.webp" type="image/webp" />
+        <source media="(min-width: 801px)" srcSet="assets/giovanne-portrait.webp" type="image/webp" />
+        <img src="assets/giovanne-portrait.webp" alt="" fetchpriority="high" loading="eager" decoding="async" />
       </picture>
     </div>);
 
@@ -374,7 +375,7 @@ function Solution() {
             <Reveal className="feature" key={i} delay={i * 60} dir="right">
                 <span className="check">✓</span>
                 <div>
-                  <h4>{f.t}</h4>
+                  <h3 className="feature-title">{f.t}</h3>
                   <p>{f.d}</p>
                 </div>
               </Reveal>
@@ -482,21 +483,21 @@ const PORTFOLIO = [
 {
   namePrefix: "Dra. Eduarda", nameAccent: "Costa",
   url: "https://dreduardacosta.com.br/",
-  img: "assets/portfolio/eduarda-costa.png",
+  img: "assets/portfolio/eduarda-costa.webp",
   tags: ["Landing Page", "Estética Regenerativa"],
   desc: "Landing page para enfermeira especialista em Estética Regenerativa, com copy sofisticada, tom acessível e captação via WhatsApp."
 },
 {
   namePrefix: "Bettina", nameAccent: "Rudolph",
   url: "https://zd.bettinarudolph.com.br/do-zero-ao-digital-fazedor-ia-oportunidade-especial-v2/",
-  img: "assets/portfolio/bettina-rudolph.png",
+  img: "assets/portfolio/bettina-rudolph.webp",
   tags: ["Landing Page", "Infoproduto"],
   desc: "Landing Page do carro-chefe da expert e infoprodutora, o Do Zero ao Digital. Estrutura pensada pra alta conversão em campanhas pagas."
 },
 {
   namePrefix: "Juliane", nameAccent: "Marrone",
   url: "https://nutrijumarrone.com.br/",
-  img: "assets/portfolio/juliane-marrone.png",
+  img: "assets/portfolio/juliane-marrone.webp",
   tags: ["Landing Page", "Nutrição"],
   desc: "Landing Page de alta conversão para nutricionista especialista em envelhecimento, seguindo identidade visual da marca."
 }];
@@ -583,7 +584,7 @@ function About() {
         <div className="grid">
           <Reveal dir="left">
             <div className="about-photo">
-              <img src="assets/giovanne-portrait.png" alt="Giovanne Marrone, web designer" />
+              <img src="assets/giovanne-portrait.webp" alt="Giovanne Marrone, web designer" loading="lazy" />
               <span className="about-photo-tag">Giovanne Marrone</span>
             </div>
           </Reveal>
@@ -600,7 +601,7 @@ function About() {
               <Reveal key={i} delay={i * 80} className="about-bullet" dir="right">
                   <span className="num">{d.n}</span>
                   <div>
-                    <h4>{d.t}</h4>
+                    <h3 className="about-bullet-title">{d.t}</h3>
                     <p>{d.d}</p>
                   </div>
                 </Reveal>
@@ -720,7 +721,7 @@ function Footer() {
     <footer className="footer">
       <div className="container">
         <div className="brand">
-          <img src="assets/logo.png" alt="Giovanne Marrone" className="brand-logo" />
+          <img src="assets/logo.webp" alt="Giovanne Marrone" className="brand-logo" />
           <span className="brand-text">
             <span className="name">Giovanne Marrone</span>
             <span className="role">web designer · feito pra converter</span>
