@@ -60,6 +60,7 @@ function App() {
 
   return (
     <>
+      <div className="ambient" aria-hidden="true" />
       <Nav />
       <main>
         <Hero key={t.heroVariant} />

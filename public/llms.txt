@@ -1,0 +1,34 @@
+# Giovanne Marrone
+
+> Web designer especialista em conversão. Crio sites, landing pages e e-commerces com copy estratégica, design profissional e SEO incluso — feitos para transformar visitantes em clientes. Diagnóstico gratuito.
+
+Giovanne Marrone é web designer focado em conversão, com a mesma estrutura usada em projetos de grandes players aplicada a negócios de todos os tamanhos. Cada projeto é construído do zero: copy estratégica, design exclusivo, SEO técnico e integração com WhatsApp. Atendimento em português (Brasil). Contato: admin@gmarrone.com.br · WhatsApp +55 51 99657-4342.
+
+## Páginas principais
+- [Site oficial](https://gmarrone.com.br/): página principal com serviços, portfólio e diagnóstico gratuito.
+- [Tipos de projeto](https://gmarrone.com.br/#projetos): Landing Page, Site Institucional e E-commerce, com escopo e faixas de preço.
+- [Portfólio](https://gmarrone.com.br/#provas): cases reais de sites entregues para clientes.
+- [Sobre](https://gmarrone.com.br/#sobre): quem é Giovanne Marrone e como trabalha.
+- [Perguntas frequentes (FAQ)](https://gmarrone.com.br/#faq): prazos, formas de pagamento, autonomia para editar o site e dúvidas comuns.
+- [Diagnóstico gratuito](https://gmarrone.com.br/#cta): próximo passo para começar um projeto.
+- [Link na bio](https://gmarrone.com.br/bio/): atalhos para site, e-book, projetos e WhatsApp.
+
+## Serviços
+- [Landing Page](https://gmarrone.com.br/#projetos): página única focada em conversão, ideal para captação de leads e campanhas. A partir de R$ 1.200, entrega em 7 a 15 dias.
+- [Site Institucional](https://gmarrone.com.br/#projetos): presença digital completa com múltiplas páginas, blog estruturado para SEO e painel editável em WordPress. Investimento sob consulta.
+- [E-commerce](https://gmarrone.com.br/#projetos): loja virtual com catálogo completo, gateway de pagamento e automações de carrinho e leads. Cronograma personalizado.
+
+## E-book
+- [Seu site está bom de verdade?](https://pay.hotmart.com/U106816414Q?bid=1784588990037): checklist honesto para pessoas que não entendem de tecnologia avaliarem o próprio site.
+
+## Portfólio (cases)
+- [Dra. Eduarda Costa](https://dreduardacosta.com.br/): landing page para enfermeira especialista em Estética Regenerativa, com copy sofisticada e captação via WhatsApp.
+- [Bettina Rudolph — Do Zero ao Digital](https://zd.bettinarudolph.com.br/do-zero-ao-digital-fazedor-ia-oportunidade-especial-v2/): landing page de infoproduto estruturada para alta conversão em campanhas pagas.
+- [Nutri Juliane Marrone](https://nutrijumarrone.com.br/): landing page de alta conversão para nutricionista especialista em envelhecimento.
+
+## Contato
+- [WhatsApp](https://wa.me/5551996574342): fale direto com Giovanne para o diagnóstico gratuito.
+- [E-mail](mailto:admin@gmarrone.com.br): contato por e-mail.
+
+## Optional
+- [Conteúdo completo (llms-full.txt)](https://gmarrone.com.br/llms-full.txt): versão em texto único com todo o conteúdo do site.

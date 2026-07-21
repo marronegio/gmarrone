@@ -309,11 +309,8 @@ function Problem() {
       <div className="container">
         <div className="grid">
           <div>
-            <Reveal>
-              <span className="section-label">01 / Problema</span>
-            </Reveal>
             <Reveal delay={80}>
-              <h2>Seu site existe, mas não traz cliente nenhum?</h2>
+              <h2>Seu site até existe, mas não traz cliente nenhum?</h2>
             </Reveal>
             <Reveal delay={160}>
               <p className="lead">

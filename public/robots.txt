@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+
+# AI / LLM guidance
+# llms.txt: https://gmarrone.com.br/llms.txt
+
+Sitemap: https://gmarrone.com.br/sitemap.xml
