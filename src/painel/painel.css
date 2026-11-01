@@ -1,0 +1,457 @@
+/* ──────────────────────────────────────────────────────────────
+   Painel interno
+   The site's lens, shut. It opens a hexagon around the login and
+   opens the rest of the way onto the panel.
+   ────────────────────────────────────────────────────────────── */
+
+@import "../tokens.css";
+
+/* Typed so the aperture can be transitioned from plain CSS */
+@property --r { syntax: "<length>"; inherits: true; initial-value: 0px; }
+@property --a { syntax: "<angle>"; inherits: true; initial-value: 30deg; }
+
+:root { --good: #4fd1a1; } /* panel only: the site itself never needs an approval color */
+
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  font-family: var(--font);
+  font-size: 17px;
+  line-height: 1.55;
+  color: var(--ink);
+  background: var(--bg);
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection { background: var(--accent); color: var(--accent-ink); }
+img { display: block; }
+h1, p { margin: 0; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+
+.sr-only {
+  position: absolute;
+  width: 1px; height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* ── Buttons ──────────────────────────── */
+.btn {
+  height: 52px;
+  padding: 0 30px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--accent-ink);
+  font: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  font-stretch: 112%;
+  cursor: pointer;
+  transition: background .3s ease, border-color .3s ease, color .3s ease;
+}
+.btn:hover:not(:disabled) { background: var(--ice); }
+.btn:disabled { opacity: .55; cursor: default; }
+
+.btn-quiet {
+  height: 42px;
+  padding: 0 22px;
+  background: none;
+  border-color: var(--line-strong);
+  color: var(--ink);
+}
+.btn-quiet:hover:not(:disabled) { background: none; border-color: var(--accent); }
+
+/* ── Iris ─────────────────────────────── */
+.iris {
+  position: fixed; inset: 0; z-index: 10;
+  overflow: hidden;
+  --r: 0px;
+  --a: 30deg;
+  transition: --r 1.4s cubic-bezier(.76, 0, .24, 1), --a 1.4s cubic-bezier(.76, 0, .24, 1);
+}
+.iris[data-stage="aperture"] {
+  --r: 236px;
+  transition-duration: .9s;
+}
+.iris[data-stage="open"] {
+  --r: 72vmax; /* just past the corner of any viewport, so the whole 1.4s is visible */
+  --a: 90deg;
+  visibility: hidden;
+  transition-property: --r, --a, visibility;
+  transition-duration: 1.4s, 1.4s, 0s;
+  transition-delay: 0s, 0s, 1.4s;
+}
+.iris[data-instant] { transition: none; }
+
+.iris-blades {
+  position: absolute; left: 50%; top: 50%;
+  width: 0; height: 0;
+  transform: rotate(var(--a));
+}
+.iris-blades.flinch { animation: flinch .42s var(--ease); }
+.blade {
+  position: absolute; left: -200vmax; top: 0;
+  width: 400vmax; height: 200vmax;
+  transform-origin: 200vmax 0;
+  transform: rotate(calc(60deg * var(--i))) translateY(var(--r));
+  background: linear-gradient(180deg, #0d1528 0, #05080f 240px);
+  box-shadow: 0 -1px 0 rgba(120, 175, 255, .55), 0 -14px 40px rgba(77, 155, 255, .12);
+}
+
+/* A wrong password: the lens twitches shut and settles back */
+@keyframes flinch {
+  35% { transform: rotate(calc(var(--a) + 2.5deg)) scale(.965); }
+}
+
+/* ── Login ────────────────────────────── */
+.login {
+  position: absolute; inset: 0;
+  overflow-y: auto;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+}
+.login-form {
+  display: grid;
+  gap: 16px;
+  width: min(296px, 100%);
+  animation: login-in .6s .45s var(--ease) both;
+}
+.login-form img { justify-self: center; margin-bottom: 8px; }
+
+.field { display: grid; gap: 6px; }
+.field span { font-size: 14px; color: var(--ink-2); }
+.field input, .field select {
+  width: 100%;
+  height: 48px;
+  padding: 0 14px;
+  border: 1px solid var(--line-strong);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-size: 16px; /* below this iOS zooms in on focus */
+  transition: border-color .2s ease;
+}
+.field select:invalid { color: var(--muted); } /* still on the "Selecione" prompt */
+.field option { color: var(--ink); }
+.field input:hover, .field select:hover { border-color: var(--muted); }
+.field input:focus-visible, .field select:focus-visible { outline-offset: 0; border-color: transparent; }
+
+.login-error { font-size: 14px; line-height: 1.4; color: var(--danger); }
+.login-form .btn { margin-top: 8px; }
+
+@keyframes login-in {
+  from { opacity: 0; transform: scale(.98); }
+}
+
+/* ── Panel frame ──────────────────────── */
+.shell {
+  min-height: 100vh; min-height: 100dvh;
+  display: grid;
+  grid-template-columns: 232px minmax(0, 1fr);
+}
+
+.side {
+  position: sticky; top: 0;
+  height: 100vh; height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  padding: 18px 14px;
+  background: var(--bg-2);
+  border-right: 1px solid var(--line);
+}
+.side a { color: inherit; text-decoration: none; }
+.side-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 8px;
+  font-size: 15px;
+  font-weight: 600;
+  font-stretch: 112%;
+}
+.side-nav { display: grid; gap: 4px; }
+.side-nav a {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 15px;
+  color: var(--muted);
+  transition: color .2s ease, background .2s ease;
+}
+.side-nav svg { width: 20px; height: 20px; flex: none; }
+.side-nav a:hover { color: var(--ink); }
+.side-nav a[aria-current="page"] { background: var(--surface); color: var(--ink); }
+.side-foot { margin-top: auto; display: grid; gap: 10px; }
+.side-account {
+  padding-inline: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.page {
+  width: 100%;
+  min-width: 0;
+  max-width: 1480px;
+  padding: 26px clamp(20px, 3vw, 44px) 72px;
+}
+.page-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: 44px;
+  margin-bottom: 26px;
+}
+.page-head h1 {
+  font-size: clamp(28px, 2.6vw, 38px);
+  font-weight: 300;
+  font-stretch: 125%;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+}
+h2 { margin: 0 0 14px; font-size: 16px; font-weight: 500; }
+.btn-small { display: inline-flex; align-items: center; height: 44px; padding: 0 22px; text-decoration: none; }
+
+.note { font-size: 13px; color: var(--muted); }
+.empty { font-size: 15px; color: var(--muted); }
+.notice {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 20px;
+  padding: 12px 16px;
+  border: 1px solid var(--danger);
+  border-radius: 10px;
+  font-size: 15px;
+}
+.link {
+  padding: 4px 0;
+  border: 0;
+  background: none;
+  color: var(--ink-2);
+  font: inherit;
+  font-size: 14px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+.link:hover { color: var(--ink); }
+.link-danger { color: var(--danger); }
+.link-danger:hover { color: var(--danger); }
+
+/* ── Stage controls ───────────────────── */
+.mark { width: 12px; height: 13px; flex: none; }
+.mark polygon { fill: var(--stage, none); stroke: var(--stage, var(--muted)); stroke-width: 1.2; }
+.mark[data-stage="enviada"] { --stage: var(--accent); }
+.mark[data-stage="aprovada"] { --stage: var(--good); }
+.mark[data-stage="recusada"] { --stage: var(--danger); }
+
+.stage {
+  height: 32px;
+  max-width: 100%;
+  padding: 0 4px;
+  border: 1px solid var(--line-strong);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--ink-2);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+.stage:hover { border-color: var(--muted); }
+.stage option { background: var(--surface); }
+
+/* ── Dashboard ────────────────────────── */
+.overview {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+  gap: 32px clamp(32px, 5vw, 80px);
+  margin-bottom: 36px;
+}
+.hero-figure strong {
+  display: block;
+  margin-block: 2px 4px;
+  font-size: clamp(40px, 5vw, 68px);
+  font-weight: 300;
+  font-stretch: 125%;
+  line-height: 1.08;
+  letter-spacing: -0.035em;
+}
+.hero-figure p:first-child { font-size: 15px; color: var(--ink-2); }
+
+.kpis {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin: 26px 0 0;
+  padding-top: 18px;
+  border-top: 1px solid var(--line);
+}
+.kpi { min-width: 0; padding-inline: 18px; border-left: 1px solid var(--line); }
+.kpi:first-child { padding-left: 0; border-left: 0; }
+.kpi dt { font-size: 14px; color: var(--muted); }
+.kpi dd { margin: 0; font-size: clamp(18px, 1.4vw, 22px); line-height: 1.3; overflow-wrap: anywhere; }
+.kpi dd.note { font-size: 13px; line-height: 1.55; }
+
+/* One series, so one hue. Bars grow from a shared baseline with the value at the tip. */
+.bars { width: 100%; border-collapse: collapse; font-size: 14px; }
+.bars th, .bars td { padding: 7px 0; text-align: left; font-weight: 400; vertical-align: middle; }
+.bars tbody th { padding-right: 16px; white-space: nowrap; color: var(--ink-2); }
+.bars-cell { width: 100%; }
+.bars-plot { display: flex; align-items: center; gap: 10px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.bar {
+  width: calc(var(--share) * (100% - 124px));
+  height: 14px;
+  flex: none;
+  border-radius: 0 4px 4px 0;
+  background: var(--accent);
+  transition: background .2s ease;
+}
+.bars tbody tr:hover .bar { background: var(--ice); }
+.bars td.bars-note { padding-left: 12px; text-align: right; white-space: nowrap; font-size: 13px; color: var(--muted); }
+
+.board {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  align-items: start;
+}
+.lane { min-height: 148px; padding: 14px 12px 12px; border-radius: 12px; background: var(--bg-2); }
+.lane-head { display: flex; align-items: center; gap: 8px; }
+.lane-head h3 { margin: 0; font-size: 15px; font-weight: 500; }
+.lane-count { margin-left: auto; font-size: 14px; color: var(--muted); }
+.lane-total { margin: 4px 0 12px; font-size: 14px; color: var(--muted); }
+
+.deals { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.deal { display: grid; padding: 12px; border-radius: 10px; background: var(--surface); }
+.deal strong { font-size: 15px; font-weight: 500; line-height: 1.3; overflow-wrap: anywhere; }
+.deal-type { font-size: 13px; color: var(--muted); }
+.deal-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px 8px;
+  margin-top: 10px;
+  font-size: 15px;
+}
+
+/* ── Propostas ────────────────────────── */
+.entry {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1.2fr) minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: end;
+  padding: 16px;
+  border-radius: 12px;
+  background: var(--bg-2);
+}
+.entry .btn { height: 48px; }
+.saved {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px 16px;
+  min-height: 30px;
+  margin: 10px 0 18px;
+  font-size: 14px;
+  color: var(--ink-2);
+}
+
+.list { width: 100%; border-collapse: collapse; font-size: 15px; }
+.list th {
+  padding: 0 12px 10px;
+  border-bottom: 1px solid var(--line-strong);
+  text-align: left;
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--muted);
+}
+.list td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+.list th:first-child, .list td:first-child { padding-left: 0; }
+.list th:last-child, .list td:last-child { padding-right: 0; }
+.list .num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.list-client { overflow-wrap: anywhere; }
+.list-type, .list-date { color: var(--ink-2); white-space: nowrap; }
+.list-stage-inner { display: inline-flex; align-items: center; gap: 8px; }
+.list-actions { text-align: right; white-space: nowrap; }
+.list-actions .link { color: var(--muted); text-decoration-color: transparent; }
+.list-actions .link:hover, .list-actions .link:focus-visible { color: var(--ink); text-decoration-color: currentColor; }
+.list-actions .link-danger, .list-actions .link-danger:hover { color: var(--danger); text-decoration-color: currentColor; }
+.list-actions .link { display: inline-block; }
+.list-actions .link + .link { margin-left: 14px; }
+
+@media (max-width: 1180px) {
+  .overview { grid-template-columns: minmax(0, 1fr); }
+  .board { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 960px) {
+  .entry { grid-template-columns: minmax(0, 1fr); }
+}
+
+@media (max-width: 860px) {
+  .shell { display: block; }
+  .side {
+    z-index: 5;
+    height: auto;
+    flex-direction: row;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 12px;
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .side-brand { padding: 4px; }
+  .side-brand span, .side-account, .side-nav svg { display: none; }
+  .side-nav { display: flex; gap: 2px; }
+  .side-nav a { padding: 8px 10px; font-size: 14px; }
+  .side-foot { margin: 0 0 0 auto; }
+  .side-foot .btn { height: 36px; padding: 0 14px; font-size: 14px; }
+}
+
+@media (max-width: 720px) {
+  .kpis { grid-template-columns: minmax(0, 1fr); gap: 14px; }
+  .kpi { padding: 0; border-left: 0; }
+
+  /* Each proposal becomes a stacked block: the columns would not fit a phone */
+  .list thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+  .list, .list tbody { display: block; }
+  .list tr {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas: "client budget" "type date" "stage stage" "actions actions";
+    align-items: center;
+    gap: 2px 12px;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .list td, .list td:first-child, .list td:last-child { padding: 0; border: 0; }
+  .list-client { grid-area: client; font-weight: 500; }
+  .list-budget { grid-area: budget; align-self: start; }
+  .list-type { grid-area: type; }
+  .list-date { grid-area: date; text-align: right; }
+  .list-type, .list-date { font-size: 14px; color: var(--muted); }
+  .list-stage { grid-area: stage; margin-top: 8px; }
+  .list-actions { grid-area: actions; margin-top: 8px; text-align: left; }
+}
+
+@media (max-width: 620px) {
+  .board { grid-template-columns: minmax(0, 1fr); }
+  .bars-note { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .iris { transition: none; }
+  .iris-blades.flinch, .login-form { animation: none; }
+}

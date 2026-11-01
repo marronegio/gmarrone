@@ -18,6 +18,12 @@
   Header set X-Content-Type-Options "nosniff"
 </IfModule>
 
+# The deploy manifest and directory listings would reveal every unlinked page
+<IfModule mod_alias.c>
+  RedirectMatch 404 ^/\.ftp-deploy
+  RedirectMatch 404 ^/assets/(.*/)?$
+</IfModule>
+
 # Gzip compression
 <IfModule mod_deflate.c>
   AddOutputFilterByType DEFLATE text/html text/plain text/css application/javascript application/json

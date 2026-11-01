@@ -1,300 +1,416 @@
 import React from "react";
-const { useState, useEffect, useRef } = React;
+import { clamp, hasFinePointer, lockScroll, onFrame, prefersReducedMotion, scrollToY } from "./lib/scroll.js";
+import { createHeroGL } from "./lib/heroGL.js";
+import { DeviceFrame, crossing, deviceScreens, trackLength } from "./lib/device.jsx";
+import { CLIENTS, DIFFS, FAQS, PAYMENT_TERMS, PLANS, PROJECTS, STATS, whatsapp } from "./lib/offer.js";
+import { Title, Words, useInView } from "./lib/title.jsx";
+
+const { useState, useEffect, useLayoutEffect, useRef } = React;
 
 // ─── Helpers ────────────────────────────────────────────────
-function useInView(options = { threshold: 0.15 }) {
-  const ref = useRef(null);
-  const [inView, setInView] = useState(false);
+const PROPOSAL_LINK = whatsapp("Oi Giovanne, quero solicitar uma proposta para o meu site.");
+
+function CountUp({ to, prefix = "", suffix = "", duration = 1500 }) {
+  const [ref, inView] = useInView(0.5);
+  const [value, setValue] = useState(to);
   useEffect(() => {
-    if (!ref.current) return;
-    const obs = new IntersectionObserver(([entry]) => {
-      if (entry.isIntersecting) {
-        setInView(true);
-        obs.disconnect();
-      }
-    }, options);
-    obs.observe(ref.current);
-    return () => obs.disconnect();
-  }, []);
-  return [ref, inView];
-}
-
-function Reveal({ as: Tag = "div", className = "", delay = 0, dir = "up", style = {}, children, ...rest }) {
-  const [ref, inView] = useInView();
-  const base = dir === "left" ? "reveal-left" : dir === "right" ? "reveal-right" : "reveal";
-  return (
-    <Tag
-      ref={ref}
-      className={`${base}${inView ? " in" : ""} ${className}`}
-      style={{ "--rev-delay": `${delay}ms`, ...style }}
-      {...rest}>
-      
-      {children}
-    </Tag>);
-
-}
-
-function CountUp({ to, suffix = "", duration = 1600, prefix = "" }) {
-  const [ref, inView] = useInView({ threshold: 0.4 });
-  const [val, setVal] = useState(0);
-  useEffect(() => {
-    if (!inView) return;
+    if (!inView || prefersReducedMotion()) return;
     let start = null;
-    const step = (ts) => {
-      if (!start) start = ts;
-      const p = Math.min((ts - start) / duration, 1);
-      const eased = 1 - Math.pow(1 - p, 3);
-      setVal(Math.round(to * eased));
-      if (p < 1) requestAnimationFrame(step);
+    let raf;
+    const step = (time) => {
+      start ??= time;
+      const p = Math.min((time - start) / duration, 1);
+      setValue(Math.round(to * (1 - Math.pow(1 - p, 4))));
+      if (p < 1) raf = requestAnimationFrame(step);
     };
-    requestAnimationFrame(step);
+    raf = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(raf);
   }, [inView]);
-  return <span ref={ref}>{prefix}{val}{suffix}</span>;
+  return <span ref={ref}>{prefix}{value}{suffix}</span>;
+}
+
+const ICONS = {
+  check: "M5 12.5l4.2 4.2L19 7",
+  x: "M7 7l10 10M17 7L7 17",
+  plus: "M12 6v12M6 12h12",
+  lock: "M7.5 11V8a4.5 4.5 0 0 1 9 0v3M6.5 11h11v9h-11z",
+  whatsapp: "M12 21a9 9 0 1 0-7.8-4.5L3 21l4.6-1.2A9 9 0 0 0 12 21z",
+};
+function Icon({ name, className = "" }) {
+  return (
+    <svg className={`icon ${className}`} viewBox="0 0 24 24" aria-hidden="true"
+      fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d={ICONS[name]} />
+    </svg>);
+
+}
+
+// Six half-planes around a hexagonal hole: the camera iris, the same hexagon as the logo.
+function Blades() {
+  return (
+    <div className="iris-blades" aria-hidden="true">
+      {[0, 1, 2, 3, 4, 5].map((i) => <span className="blade" key={i} style={{ "--i": i }} />)}
+    </div>);
+
+}
+
+const easeInOut = (t) => (t < 0.5 ? 16 * t ** 5 : 1 - Math.pow(-2 * t + 2, 5) / 2);
+
+// Read once per page load: StrictMode runs effects twice, and the intro plays once a session.
+let introSeen = null;
+function hasSeenIntro() {
+  if (introSeen !== null) return introSeen;
+  try {
+    introSeen = sessionStorage.getItem("gm-intro") === "1";
+    sessionStorage.setItem("gm-intro", "1");
+  } catch {
+    introSeen = false;
+  }
+  return introSeen;
+}
+
+// ─── INTRO — the lens opens ─────────────────────────────────
+export function Intro({ onReveal }) {
+  const [done, setDone] = useState(false);
+  const rootRef = useRef(null);
+
+  useLayoutEffect(() => {
+    if (hasSeenIntro() || prefersReducedMotion()) {
+      onReveal();
+      setDone(true);
+      return;
+    }
+
+    lockScroll(true);
+    const root = rootRef.current;
+    const reach = Math.hypot(window.innerWidth, window.innerHeight) / 2 + 60;
+    let raf;
+    let revealed = false;
+    let start = null;
+
+    const open = (time) => {
+      start ??= time;
+      const p = Math.min((time - start) / 1500, 1);
+      const e = easeInOut(p);
+      root.style.setProperty("--r", `${e * reach}px`);
+      root.style.setProperty("--a", `${30 + e * 60}deg`);
+      if (p > 0.32 && !revealed) {
+        revealed = true;
+        onReveal();
+      }
+      if (p < 1) raf = requestAnimationFrame(open);
+      else {
+        lockScroll(false);
+        setDone(true);
+      }
+    };
+
+    const delay = setTimeout(() => {
+      root.classList.add("opening");
+      raf = requestAnimationFrame(open);
+    }, 1150);
+
+    return () => {
+      clearTimeout(delay);
+      cancelAnimationFrame(raf);
+      lockScroll(false);
+    };
+  }, []);
+
+  if (done) return null;
+  return (
+    <div className="intro" ref={rootRef}>
+      <Blades />
+      <div className="intro-mark" aria-hidden="true">
+        <svg viewBox="0 0 100 100">
+          <polygon points="50,3 90.7,26.5 90.7,73.5 50,97 9.3,73.5 9.3,26.5" pathLength="1" />
+        </svg>
+        <img src="assets/logo.webp" alt="" />
+      </div>
+    </div>);
+
+}
+
+// ─── CURSOR — a ring that names what a click will do ────────
+export function Cursor() {
+  const ref = useRef(null);
+  const [label, setLabel] = useState("");
+  const [enabled, setEnabled] = useState(false);
+
+  useEffect(() => {
+    if (!hasFinePointer() || prefersReducedMotion()) return;
+    setEnabled(true);
+    const target = { x: -100, y: -100 };
+    const position = { x: -100, y: -100 };
+    const onMove = (e) => {
+      target.x = e.clientX;
+      target.y = e.clientY;
+      const hit = e.target.closest?.("[data-cursor]");
+      setLabel(hit ? hit.dataset.cursor : "");
+    };
+    window.addEventListener("pointermove", onMove, { passive: true });
+    const off = onFrame(() => {
+      position.x += (target.x - position.x) * 0.2;
+      position.y += (target.y - position.y) * 0.2;
+      if (ref.current) ref.current.style.transform = `translate3d(${position.x}px, ${position.y}px, 0)`;
+    });
+    return () => {
+      off();
+      window.removeEventListener("pointermove", onMove);
+    };
+  }, []);
+
+  if (!enabled) return null;
+  return (
+    <div className={`cursor${label ? " has-label" : ""}`} ref={ref} aria-hidden="true">
+      <span>{label}</span>
+    </div>);
+
 }
 
 // ─── NAV ────────────────────────────────────────────────────
-function Nav() {
+const LINKS = [
+["Projetos", "#projetos"],
+["Serviços", "#servicos"],
+["Planos", "#planos"],
+["Sobre", "#sobre"],
+["FAQ", "#faq"]];
+
+
+export function Nav() {
   const [scrolled, setScrolled] = useState(false);
+  const [open, setOpen] = useState(false);
+  const barRef = useRef(null);
+
+  useEffect(() => onFrame((y) => {
+    setScrolled(y > 30);
+    const max = document.documentElement.scrollHeight - window.innerHeight;
+    if (barRef.current) barRef.current.style.transform = `scaleX(${max > 0 ? y / max : 0})`;
+  }), []);
+
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 30);
-    window.addEventListener("scroll", onScroll);
-    return () => window.removeEventListener("scroll", onScroll);
+    if (!open) return;
+    const onKey = (e) => e.key === "Escape" && setOpen(false);
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open]);
+
+  return (
+    <header className={`nav${scrolled ? " scrolled" : ""}${open ? " open" : ""}`}>
+      <a className="skip" href="#projetos">Ir para o conteúdo</a>
+      <div className="wrap nav-inner">
+        <a href="#" className="brand" aria-label="Giovanne Marrone, voltar ao início">
+          <img src="assets/logo.webp" alt="" width="34" height="34" />
+          <span>Giovanne Marrone</span>
+        </a>
+        <nav className="nav-links" aria-label="Principal">
+          {LINKS.map(([label, href]) =>
+          <a key={href} href={href} onClick={() => setOpen(false)}>{label}</a>
+          )}
+        </nav>
+        <div className="nav-end">
+          <span className="status"><i />Disponível</span>
+          <a href="#contato" className="btn btn-line btn-sm">Contato</a>
+          <button
+            type="button"
+            className="nav-toggle"
+            aria-expanded={open}
+            aria-label={open ? "Fechar menu" : "Abrir menu"}
+            onClick={() => setOpen(!open)}>
+            <span /><span />
+          </button>
+        </div>
+      </div>
+      <div className="nav-bar" ref={barRef} aria-hidden="true" />
+    </header>);
+
+}
+
+// ─── HERO ───────────────────────────────────────────────────
+export function Hero({ revealed }) {
+  const canvasRef = useRef(null);
+  const glRef = useRef(null);
+  const [live, setLive] = useState(false);
+
+  useEffect(() => {
+    if (prefersReducedMotion()) return;
+    const mobile = window.matchMedia("(max-width: 800px)").matches;
+    let cancelled = false;
+    createHeroGL(canvasRef.current, {
+      src: mobile ? "assets/giovanne-portrait-mobile.webp" : "assets/giovanne-portrait.webp",
+      focus: mobile ? [0.5, 1] : [0.82, 1],
+      fine: hasFinePointer(),
+    }).then((gl) => {
+      if (!gl) return;
+      if (cancelled) return gl.destroy();
+      glRef.current = gl;
+      setLive(true);
+    }).catch(() => { /* the <img> underneath remains */ });
+    return () => {
+      cancelled = true;
+      glRef.current?.destroy();
+    };
   }, []);
+
+  useEffect(() => {
+    if (revealed && live) glRef.current?.play();
+  }, [revealed, live]);
+
   return (
-    <nav className={`nav${scrolled ? " scrolled" : ""}`}>
-      <div className="container nav-inner">
-        <a href="#" className="brand">
-          <img src="assets/logo.webp" alt="Giovanne Marrone" className="brand-logo" />
-          <span className="brand-text">
-            <span className="name">Giovanne Marrone</span>
-            <span className="role">web designer</span>
-          </span>
-        </a>
-        <div className="nav-links">
-          <a href="#problema">Problema</a>
-          <a href="#solucao">Solução</a>
-          <a href="#projetos">Projetos</a>
-          <a href="#provas">Portfólio</a>
-          <a href="#faq">FAQ</a>
+    <section className={`hero${revealed ? " on" : ""}`} id="topo">
+      <div className="hero-media" aria-hidden="true">
+        <picture>
+          <source media="(max-width: 800px)" srcSet="assets/giovanne-portrait-mobile.webp" type="image/webp" />
+          <img src="assets/giovanne-portrait.webp" alt="" fetchpriority="high" decoding="async" />
+        </picture>
+        <canvas ref={canvasRef} className={live ? "live" : ""} />
+      </div>
+      <div className="wrap hero-body">
+        <h1 className="hero-title">
+          <Words text="Sites que *vendem* enquanto você atende seus clientes" />
+        </h1>
+        <p className="hero-sub">
+          Sites, landing pages e e-commerces com copy estratégica, design profissional e SEO incluso — a mesma estrutura que aumentou em mais de 20% a conversão de grandes players do digital.
+        </p>
+        <div className="hero-actions">
+          <a href="#projetos" className="btn btn-line">Projetos</a>
+          <a href={PROPOSAL_LINK} target="_blank" rel="noopener" className="btn btn-solid">Solicitar proposta</a>
         </div>
-        <a href="#cta" className="btn btn-ghost" style={{ padding: "10px 18px", fontSize: 13 }}>
-          Diagnóstico grátis <span className="arrow">→</span>
-        </a>
-      </div>
-    </nav>);
-
-}
-
-const CLIENTS = [
-{ name: "Dra. Eduarda Costa", img: "assets/clients/eduarda.webp" },
-{ name: "Nutri Juliane Marrone", img: "assets/clients/juliane.webp" },
-{ name: "Grupo Líbertas", img: "assets/clients/libertas.webp" },
-{ name: "IGT International Coaching", img: "assets/clients/igt.webp" },
-{ name: "Bettina Rudolph", img: "assets/clients/bettina.webp" },
-{ name: "Geronimo Theml", img: "assets/clients/geronimo.webp" }];
-
-
-function TrustStack() {
-  return (
-    <div className="trust-stack">
-      <div className="trust-avatars">
-        {CLIENTS.map((c, i) =>
-        <div className="trust-avatar" key={i} style={{ zIndex: CLIENTS.length - i }}>
-            <img src={c.img} alt={c.name} loading="lazy" />
-            <span className="tip">{c.name}</span>
+        <div className="trust">
+          <div className="trust-faces">
+            {CLIENTS.map((c) =>
+            <img key={c.name} src={c.img} alt={c.name} title={c.name} width="40" height="40" />
+            )}
           </div>
-        )}
+          <p><strong>+30 profissionais</strong> já confiaram</p>
+        </div>
       </div>
-      <div className="trust-count">
-        <span className="star">★★★★★</span>
-        <span><strong>+30 profissionais</strong> já confiaram</span>
-      </div>
-    </div>);
+      <p className="hero-signature">
+        <strong>Giovanne Marrone</strong>
+        Web designer especialista em conversão
+      </p>
+      <span className="hero-scroll" aria-hidden="true"><i /></span>
+    </section>);
 
 }
 
-// Portrait background — used by all 3 hero variants
-function HeroBg() {
-  return (
-    <div className="hero-bg" aria-hidden="true">
-      <picture>
-        <source media="(max-width: 800px)" srcSet="assets/giovanne-portrait-mobile.webp" type="image/webp" />
-        <source media="(min-width: 801px)" srcSet="assets/giovanne-portrait.webp" type="image/webp" />
-        <img src="assets/giovanne-portrait.webp" alt="" fetchpriority="high" loading="eager" decoding="async" />
-      </picture>
-    </div>);
+// ─── PROJECTS — pinned horizontal gallery ───────────────────
+export function Projects() {
+  const sectionRef = useRef(null);
+  const stageRef = useRef(null);
+  const trackRef = useRef(null);
+  const barRef = useRef(null);
+  const [pinned, setPinned] = useState(true);
 
-}
+  useEffect(() => {
+    if (prefersReducedMotion()) {
+      setPinned(false);
+      return;
+    }
+    const section = sectionRef.current;
+    const stage = stageRef.current;
+    const track = trackRef.current;
+    let distance = 0;
+    let cards = [];
 
-// ─── HERO V1 — Typography-first ─────────────────────────────
-function HeroV1() {
+    const measure = () => {
+      distance = Math.max(track.scrollWidth - window.innerWidth, 0);
+      section.style.height = `${trackLength(distance) + stage.offsetHeight}px`;
+      cards = [...track.querySelectorAll("[data-card]")].map((el) => {
+        const frame = el.querySelector(".work-frame");
+        return { frame, scroll: deviceScreens(frame), left: el.offsetLeft, width: el.offsetWidth };
+      });
+    };
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(track);
+    observer.observe(stage);
+    track.querySelectorAll("img").forEach((img) => img.addEventListener("load", measure));
+
+    const off = onFrame(() => {
+      const rect = section.getBoundingClientRect();
+      const span = rect.height - stage.offsetHeight;
+      if (span <= 0 || rect.bottom < -200 || rect.top > window.innerHeight + 200) return;
+      const p = clamp(-rect.top / span);
+      const x = p * distance;
+      track.style.transform = `translate3d(${-x}px, 0, 0)`;
+      if (barRef.current) barRef.current.style.transform = `scaleX(${p})`;
+
+      const vw = window.innerWidth;
+      cards.forEach((c) => {
+        const left = c.left - x;
+        c.scroll(crossing(left, c.left, c.width, vw));
+        const fromCenter = (left + c.width / 2 - vw / 2) / vw;
+        const away = Math.abs(fromCenter);
+        c.frame.style.transform = `scale(${1 - clamp(away - 0.12, 0, 0.6) * 0.14})`;
+        c.frame.style.setProperty("--dim", clamp((away - 0.28) * 1.1, 0, 0.5));
+        c.frame.style.setProperty("--focus", (1 - clamp((away - 0.1) * 2.5)).toFixed(3));
+        c.frame.style.setProperty("--drift", clamp(fromCenter, -0.6, 0.6).toFixed(3));
+      });
+    });
+
+    return () => {
+      off();
+      observer.disconnect();
+      section.style.height = "";
+    };
+  }, []);
+
+  // Keyboard focus must not leave a card off screen inside the clipped track.
+  const onFocus = (event) => {
+    if (!pinned) return;
+    const card = event.target.closest("[data-card]");
+    if (!card) return;
+    const section = sectionRef.current;
+    const span = section.offsetHeight - stageRef.current.offsetHeight;
+    const distance = trackRef.current.scrollWidth - window.innerWidth;
+    if (distance <= 0) return;
+    const center = card.offsetLeft + card.offsetWidth / 2 - window.innerWidth / 2;
+    const top = section.getBoundingClientRect().top + window.scrollY;
+    scrollToY(top + span * clamp(center / distance));
+  };
+
   return (
-    <section className="hero hero-v1" id="topo">
-      <HeroBg />
-      <div className="container">
-        <div className="hero-content">
-          <Reveal>
-            <span className="eyebrow">
-              <span className="pulse"></span>
-              Web designer · Especialista em conversão
-            </span>
-          </Reveal>
-          <Reveal delay={80}>
-            <h1 className="hero-headline" style={{ fontSize: "60px" }}>
-              Sites que vendem <span className="accent-word" style={{ fontWeight: "700", fontFamily: "Lora" }}>enquanto</span> você atende seus clientes
-            </h1>
-          </Reveal>
-          <Reveal delay={180}>
-            <p className="lead hero-sub">
-              Desenvolvo sites, landing pages e e-commerces com copy estratégica, design profissional e SEO incluso — a mesma estrutura que aumentou em mais de 20% a taxa de conversão de grandes players do digital.
+    <section className={`works${pinned ? " pinned" : ""}`} id="projetos" ref={sectionRef}>
+      <div className="works-stage" ref={stageRef}>
+        <div className="works-track" ref={trackRef} onFocus={onFocus}>
+          <div className="works-intro">
+            <Title text="Sites reais, *resultados reais.*" />
+            <p className="lead">
+              Conheça algumas pessoas que confiaram no meu trabalho. Cada projeto foi pensado do zero pra atender o posicionamento do cliente e converter o público certo.
             </p>
-          </Reveal>
-          <Reveal delay={260} className="hero-actions">
-            <a href="#cta" className="btn btn-primary btn-lg">Quero meu diagnóstico gratuito <span className="arrow">→</span></a>
-            <a href="#projetos" className="btn btn-ghost btn-lg">Ver tipos de projeto</a>
-          </Reveal>
-          <Reveal delay={340}>
-            <div className="hero-micro">Análise honesta do seu site atual. Sem enrolação, sem venda forçada.</div>
-          </Reveal>
-          <Reveal delay={400}>
-            <TrustStack />
-          </Reveal>
+          </div>
+
+          {PROJECTS.map((p) =>
+          <article className="work" data-card key={p.img}>
+              <DeviceFrame project={p} className="work-frame" data-cursor="Ver site" />
+              <div className="work-meta">
+                <div>
+                  <h3>{p.first} <em>{p.last}</em></h3>
+                  <p className="work-tags">{p.tags}</p>
+                </div>
+                <p className="work-desc">{p.desc}</p>
+              </div>
+            </article>
+          )}
+
+          <article className="work work-next" data-card>
+            <a className="work-frame" href={PROPOSAL_LINK} target="_blank" rel="noopener" data-cursor="Vamos conversar">
+              <span className="work-next-hex" aria-hidden="true" />
+              <span className="work-next-text">O próximo pode ser <em>o seu.</em></span>
+              <span className="btn btn-solid">Solicitar proposta</span>
+            </a>
+            {/* An empty meta row keeps the frame aligned with the project cards */}
+            <div className="work-meta" aria-hidden="true" />
+          </article>
         </div>
-
-        <Reveal delay={420}>
-          <div className="hero-author-tag">
-            <span>Giovanne Marrone</span>
-            <span className="muted">/ web designer</span>
-          </div>
-        </Reveal>
-
-        <Reveal delay={500}>
-          <div className="hero-metrics">
-            <div className="hero-metric">
-              <div className="n">+<CountUp to={40} /></div>
-              <div className="l">páginas / Bettina Rudolph</div>
-            </div>
-            <div className="hero-metric">
-              <div className="n">+<CountUp to={15} /></div>
-              <div className="l">páginas / Gerônimo Theml</div>
-            </div>
-            <div className="hero-metric">
-              <div className="n">+<CountUp to={20} suffix="%" /></div>
-              <div className="l">connect rate</div>
-            </div>
-            <div className="hero-metric">
-              <div className="n"><CountUp to={2} />a</div>
-              <div className="l">de bastidor digital</div>
-            </div>
-          </div>
-        </Reveal>
+        <div className="works-progress" aria-hidden="true"><span ref={barRef} /></div>
       </div>
     </section>);
 
 }
 
-// ─── HERO V2 — Split (text only) ────────────────────────────
-function HeroV2() {
-  return (
-    <section className="hero hero-v2" id="topo">
-      <HeroBg />
-      <div className="container">
-        <div className="hero-content">
-          <Reveal>
-            <span className="eyebrow">
-              <span className="pulse"></span>
-              Web designer · Especialista em conversão
-            </span>
-          </Reveal>
-          <Reveal delay={80}>
-            <h1 className="hero-headline">
-              Sites que <span className="accent-word">vendem</span> enquanto você atende seus clientes
-            </h1>
-          </Reveal>
-          <Reveal delay={180}>
-            <p className="lead hero-sub">
-              Sites, landing pages e e-commerces com copy estratégica, design profissional e SEO incluso — a mesma estrutura que aumentou em mais de 20% a conversão de grandes players do digital.
-            </p>
-          </Reveal>
-          <Reveal delay={260} className="hero-actions">
-            <a href="#cta" className="btn btn-primary btn-lg">Quero meu diagnóstico gratuito <span className="arrow">→</span></a>
-            <a href="#projetos" className="btn btn-ghost btn-lg">Tipos de projeto</a>
-          </Reveal>
-          <Reveal delay={340}>
-            <div className="hero-micro">Análise honesta do seu site atual. Sem enrolação.</div>
-          </Reveal>
-          <Reveal delay={400}>
-            <TrustStack />
-          </Reveal>
-        </div>
-      </div>
-    </section>);
-
-}
-
-// ─── HERO V3 — Left text + floating cards over portrait ────
-function HeroV3() {
-  return (
-    <section className="hero hero-v3" id="topo">
-      <HeroBg />
-      <div className="container">
-        <div className="hero-stage">
-          <div className="hero-content">
-            <Reveal>
-              <span className="eyebrow">
-                <span className="pulse"></span>
-                Web designer · Especialista em conversão
-              </span>
-            </Reveal>
-            <Reveal delay={80}>
-              <h1 className="hero-headline">
-                Sites que <span className="accent-word">vendem</span> enquanto você atende seus clientes
-              </h1>
-            </Reveal>
-            <Reveal delay={180}>
-              <p className="lead hero-sub">
-                Copy estratégica, design profissional e SEO incluso — a estrutura que já aumentou em mais de 20% a conversão de grandes players do digital.
-              </p>
-            </Reveal>
-            <Reveal delay={260} className="hero-actions">
-              <a href="#cta" className="btn btn-primary btn-lg">Quero meu diagnóstico gratuito <span className="arrow">→</span></a>
-              <a href="#projetos" className="btn btn-ghost btn-lg">Ver projetos</a>
-            </Reveal>
-            <Reveal delay={340}>
-              <div className="hero-micro">Análise honesta do seu site atual. Sem enrolação, sem venda forçada.</div>
-            </Reveal>
-            <Reveal delay={400}>
-              <TrustStack />
-            </Reveal>
-          </div>
-
-          <div className="float-card fc-1">
-            <div className="fc-label">Leads / mês</div>
-            <div className="fc-value"><CountUp to={184} /></div>
-            <div className="fc-delta">↑ 3.2× em 60 dias</div>
-          </div>
-          <div className="float-card fc-2">
-            <div className="fc-label">SEO score</div>
-            <div className="fc-value">98<span style={{ fontSize: 14, color: "var(--muted)" }}>/100</span></div>
-            <div className="fc-delta">Core Web Vitals · OK</div>
-          </div>
-          <div className="float-card fc-3">
-            <div className="fc-label">Connect rate</div>
-            <div className="fc-value">+<CountUp to={20} suffix="%" /></div>
-            <div className="fc-delta">grandes players</div>
-          </div>
-          <div className="float-card fc-4">
-            <div className="fc-label">Tempo de carga</div>
-            <div className="fc-value">1.1<span style={{ fontSize: 14, color: "var(--muted)" }}>s</span></div>
-            <div className="fc-delta">↓ 68% vs. template</div>
-          </div>
-        </div>
-      </div>
-    </section>);
-
-}
-
-// ─── PROBLEM ────────────────────────────────────────────────
+// ─── PROBLEM — each line lights up as it crosses the screen ─
 const PROBLEMS = [
 "Você aparece no Google, mas ninguém clica",
 "As pessoas entram no site e saem em segundos",
@@ -303,442 +419,362 @@ const PROBLEMS = [
 "Cada lead que escapa é cliente do concorrente"];
 
 
-function Problem() {
+export function Problem() {
+  const listRef = useRef(null);
+
+  useEffect(() => {
+    if (prefersReducedMotion()) return;
+    const items = [...listRef.current.children];
+    return onFrame(() => {
+      const center = window.innerHeight * 0.55;
+      items.forEach((item) => {
+        const rect = item.getBoundingClientRect();
+        if (rect.bottom < -100 || rect.top > window.innerHeight + 100) return;
+        const distance = Math.abs(rect.top + rect.height / 2 - center) / window.innerHeight;
+        item.style.setProperty("--lit", 1 - clamp((distance - 0.08) * 3.4));
+      });
+    });
+  }, []);
+
   return (
-    <section className="problem" id="problema">
-      <div className="container">
-        <div className="grid">
-          <div>
-            <Reveal delay={80}>
-              <h2>Seu site até existe, mas não traz cliente nenhum?</h2>
-            </Reveal>
-            <Reveal delay={160}>
-              <p className="lead">
-                A maioria dos profissionais autônomos investe num site bonito e descobre, meses depois, que ele não passa de um cartão de visitas digital esquecido no Google. Sem estratégia de conversão, sem SEO, sem copy que vende — um site é só uma despesa.
-              </p>
-            </Reveal>
-          </div>
-          <div>
-            <ul>
-              {PROBLEMS.map((p, i) =>
-              <Reveal as="li" key={i} delay={i * 80} dir="right">
-                  <span className="x">✕</span>
-                  <span>{p}</span>
-                </Reveal>
-              )}
-            </ul>
-          </div>
+    <section className="sec problem" id="problema">
+      <div className="wrap problem-grid">
+        <div className="problem-head">
+          <Title text="Seu site até existe, mas não traz *cliente nenhum?*" />
+          <p className="lead">
+            A maioria dos profissionais autônomos investe num site bonito e descobre, meses depois, que ele não passa de um cartão de visitas digital esquecido no Google. Sem estratégia de conversão, sem SEO, sem copy que vende — um site é só uma despesa.
+          </p>
         </div>
+        <ul className="problem-list" ref={listRef}>
+          {PROBLEMS.map((text) =>
+          <li key={text}><Icon name="x" /><span>{text}</span></li>
+          )}
+        </ul>
       </div>
     </section>);
 
 }
 
-// ─── SOLUTION ───────────────────────────────────────────────
-const FEATURES = [
-{ t: "Copy estratégica", d: "Escrita do zero com base no seu posicionamento, público e oferta — não é template traduzido." },
-{ t: "Design profissional", d: "Alinhado à identidade visual do seu negócio, não a uma estética genérica de Wix." },
-{ t: "SEO incluso", d: "Pra você aparecer no Google sem depender de tráfego pago. Sem custo extra, sem upsell." },
-{ t: "Integrações que funcionam", d: "WhatsApp, formulários, automações e ferramentas que você já usa — conectadas no projeto." },
-{ t: "Responsivo de verdade", d: "Mobile-first. Funciona perfeitamente em qualquer dispositivo, do iPhone SE ao desktop 4K." },
-{ t: "Performance otimizada", d: "Carregamento rápido pra ranquear melhor no Google e segurar o visitante na página." }];
+// ─── SERVICES — strips that expand, as in the reference ─────
+const SERVICES = [
+{ t: "Copy estratégica", img: "copy", focus: "40% 50%", d: "Escrita do zero com base no seu posicionamento, público e oferta — não é template traduzido." },
+{ t: "Design profissional", img: "design", focus: "52% 50%", d: "Alinhado à identidade visual do seu negócio, não a uma estética genérica de Wix." },
+{ t: "SEO incluso", img: "seo", focus: "58% 40%", d: "Pra você aparecer no Google sem depender de tráfego pago. Sem custo extra, sem upsell." },
+{ t: "Integrações que funcionam", img: "integracoes", focus: "55% 50%", d: "WhatsApp, formulários, automações e ferramentas que você já usa — conectadas no projeto." },
+{ t: "Responsivo de verdade", img: "responsivo", focus: "62% 50%", d: "Mobile-first. Funciona perfeitamente em qualquer dispositivo, do iPhone SE ao desktop 4K." },
+{ t: "Performance otimizada", img: "performance", focus: "72% 50%", d: "Carregamento rápido pra ranquear melhor no Google e segurar o visitante na página." }];
 
 
-function Solution() {
+export function Services() {
+  const [active, setActive] = useState(0);
   return (
-    <section className="solution" id="solucao">
-      <div className="container">
-        <div className="grid">
-          <div>
-            <Reveal>
-              <span className="section-label">02 / Solução</span>
-            </Reveal>
-            <Reveal delay={80}>
-              <h2>Site completo, do zero ao primeiro lead</h2>
-            </Reveal>
-            <Reveal delay={160}>
-              <p className="lead" style={{ marginTop: 24 }}>
-                Eu não entrego "site bonito". Entrego estrutura de conversão. Cada elemento da página é pensado pra fazer o visitante tomar uma ação — agendar, comprar ou chamar no WhatsApp.
-              </p>
-            </Reveal>
-            <Reveal delay={240}>
-              <div style={{ marginTop: 32 }}>
-                <a href="#cta" className="btn btn-primary">Quero esse padrão no meu site <span className="arrow">→</span></a>
-              </div>
-            </Reveal>
-          </div>
-          <div className="features">
-            {FEATURES.map((f, i) =>
-            <Reveal className="feature" key={i} delay={i * 60} dir="right">
-                <span className="check">✓</span>
-                <div>
-                  <h3 className="feature-title">{f.t}</h3>
-                  <p>{f.d}</p>
-                </div>
-              </Reveal>
-            )}
-          </div>
-        </div>
+    <section className="sec services" id="servicos">
+      <div className="wrap services-head">
+        <Title text="Site completo, do zero ao *primeiro lead.*" />
+        <p className="lead">
+          Eu não entrego "site bonito". Entrego estrutura de conversão. Cada elemento da página é pensado pra fazer o visitante tomar uma ação — agendar, comprar ou chamar no WhatsApp.
+        </p>
+      </div>
+      <div className="strips">
+        {SERVICES.map((s, i) =>
+        <button
+          type="button"
+          key={s.t}
+          className={`strip${active === i ? " on" : ""}`}
+          aria-expanded={active === i}
+          onClick={() => setActive(i)}
+          onPointerEnter={(e) => e.pointerType === "mouse" && setActive(i)}
+          onFocus={() => setActive(i)}>
+            <picture>
+              <source media="(max-width: 800px)" srcSet={`assets/strips/${s.img}-m.webp`} type="image/webp" />
+              <img src={`assets/strips/${s.img}.webp`} alt="" loading="lazy" decoding="async" style={{ objectPosition: s.focus }} />
+            </picture>
+            <span className="strip-label">{s.t}</span>
+            <span className="strip-body">
+              <strong>{s.t}</strong>
+              <span>{s.d}</span>
+            </span>
+          </button>
+        )}
       </div>
     </section>);
 
 }
 
-// ─── PROJECT TYPES ──────────────────────────────────────────
-const TYPES = [
-{
-  num: "01", badge: "Entrada",
-  tag: "Landing Page",
-  desc: "Página única focada em conversão. Ideal para captação de leads, lançamentos e campanhas pontuais.",
-  features: [
-  "Copy estratégica completa",
-  "Design exclusivo",
-  "SEO on-page incluso",
-  "Integração com WhatsApp",
-  "Entrega em 7 a 15 dias"],
+// ─── DIFFERENTIALS — a hexagon of light rises behind the cards ─
+export function Differentials() {
+  const sectionRef = useRef(null);
+  const riseRef = useRef(null);
 
-  from: "a partir de", price: "R$ 1.200"
-},
-{
-  num: "02", badge: "Mais escolhido", popular: true, featured: true,
-  tag: "Site Institucional",
-  desc: "Presença digital completa pra autoridade e geração de leads orgânicos via SEO.",
-  features: [
-  "Múltiplas páginas estratégicas",
-  "Blog estruturado pra SEO",
-  "Copy + Design + SEO técnico",
-  "Painel editável (WordPress)",
-  "Entrega em 20 a 30 dias"],
+  useEffect(() => {
+    if (prefersReducedMotion()) return;
+    return onFrame(() => {
+      const rect = sectionRef.current.getBoundingClientRect();
+      const vh = window.innerHeight;
+      if (rect.bottom < 0 || rect.top > vh) return;
+      const p = clamp((vh - rect.top) / (vh + rect.height * 0.5));
+      riseRef.current.style.transform = `translate3d(-50%, ${(1 - p) * 34}vh, 0) scale(${1 + (1 - p) * 0.1})`;
+      riseRef.current.style.opacity = clamp(p * 1.7);
+    });
+  }, []);
 
-  from: "investimento", price: "sob consulta"
-},
-{
-  num: "03", badge: "Avançado",
-  tag: "E-commerce",
-  desc: "Loja virtual estruturada pra vender no piloto automático, com integrações de pagamento e automação.",
-  features: [
-  "Catálogo de produtos completo",
-  "Gateway de pagamento integrado",
-  "Automações de carrinho/leads",
-  "SEO de produto e categoria",
-  "Cronograma personalizado"],
-
-  from: "investimento", price: "sob consulta"
-}];
-
-
-function Types() {
   return (
-    <section className="types" id="projetos">
-      <div className="container">
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "end", gap: 40, flexWrap: "wrap" }}>
-          <div>
-            <Reveal><span className="section-label">03 / Tipos de projeto</span></Reveal>
-            <Reveal delay={80}><h2>Que tipo de site você precisa?</h2></Reveal>
-          </div>
-          <Reveal delay={140}>
-            <p className="lead" style={{ maxWidth: 420 }}>
-              Três escopos. Cada um pensado pra um momento diferente do seu negócio. Não sabe qual? O diagnóstico decide pra você.
-            </p>
-          </Reveal>
+    <section className="sec diffs" ref={sectionRef}>
+      <div className="diffs-sky" aria-hidden="true">
+        <div className="diffs-rise" ref={riseRef}>
+          <svg viewBox="0 0 1000 1000">
+            <defs>
+              <linearGradient id="rise-fill" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stopColor="#4d9bff" stopOpacity=".62" />
+                <stop offset=".2" stopColor="#3f6fe6" stopOpacity=".34" />
+                <stop offset=".46" stopColor="#4a3fd6" stopOpacity=".14" />
+                <stop offset=".7" stopColor="#070b15" stopOpacity="0" />
+              </linearGradient>
+            </defs>
+            <polygon className="rise-bloom" points="500,0 933,250 933,750 500,1000 67,750 67,250" />
+            <polygon className="rise-glow" points="500,0 933,250 933,750 500,1000 67,750 67,250" />
+            <polygon className="rise-body" points="500,0 933,250 933,750 500,1000 67,750 67,250" fill="url(#rise-fill)" />
+          </svg>
         </div>
-
-        <div className="types-grid">
-          {TYPES.map((t, i) =>
-          <Reveal key={i} delay={i * 100}>
-              <article className={`type-card${t.featured ? " featured" : ""}`}>
-                <div className="type-top">
-                  <span className="type-num">{t.num}</span>
-                  <span className={`type-badge${t.popular ? " popular" : ""}`}>
-                    {t.popular && <span className="type-badge-star">★</span>}
-                    {t.badge}
-                  </span>
-                </div>
-                <h3 className="type-name">{t.tag}</h3>
-                <p className="type-desc">{t.desc}</p>
-                <ul className="type-features">
-                  {t.features.map((f, j) =>
-                <li key={j}><span className="type-check">✓</span>{f}</li>
-                )}
-                </ul>
-                <div className="type-price">
-                  <span className="price-from">{t.from}</span>
-                  <span className="price-value">{t.price}</span>
-                </div>
-                <a href="#cta" className="btn btn-primary type-cta">Quero esse projeto</a>
-              </article>
-            </Reveal>
+      </div>
+      <div className="wrap diffs-inner">
+        <Title className="center" text="Por que trabalhar *comigo*" />
+        <div className="diffs-grid">
+          {DIFFS.map((d) =>
+          <article className="diff" key={d.t}>
+              <h3><Words text={d.t} /></h3>
+              <p>{d.d}</p>
+            </article>
           )}
         </div>
-      </div>
-    </section>);
-
-}
-
-// ─── PROOF / PORTFOLIO ──────────────────────────────────────
-const PORTFOLIO = [
-{
-  namePrefix: "Dra. Eduarda", nameAccent: "Costa",
-  url: "https://dreduardacosta.com.br/",
-  img: "assets/portfolio/eduarda-costa.webp",
-  tags: ["Landing Page", "Estética Regenerativa"],
-  desc: "Landing page para enfermeira especialista em Estética Regenerativa, com copy sofisticada, tom acessível e captação via WhatsApp."
-},
-{
-  namePrefix: "Bettina", nameAccent: "Rudolph",
-  url: "https://zd.bettinarudolph.com.br/do-zero-ao-digital-fazedor-ia-oportunidade-especial-v2/",
-  img: "assets/portfolio/bettina-rudolph.webp",
-  tags: ["Landing Page", "Infoproduto"],
-  desc: "Landing Page do carro-chefe da expert e infoprodutora, o Do Zero ao Digital. Estrutura pensada pra alta conversão em campanhas pagas."
-},
-{
-  namePrefix: "Juliane", nameAccent: "Marrone",
-  url: "https://nutrijumarrone.com.br/",
-  img: "assets/portfolio/juliane-marrone.webp",
-  tags: ["Landing Page", "Nutrição"],
-  desc: "Landing Page de alta conversão para nutricionista especialista em envelhecimento, seguindo identidade visual da marca."
-}];
-
-
-function Proof() {
-  return (
-    <section className="proof" id="provas">
-      <div className="container">
-        <div className="proof-head">
-          <div>
-            <Reveal><span className="section-label">04 / Portfólio</span></Reveal>
-            <Reveal delay={80}><h2>Sites reais, resultados reais.</h2></Reveal>
-          </div>
-          <Reveal delay={140}>
-            <p className="lead" style={{ maxWidth: 460 }}>
-              Conheça algumas pessoas que confiaram no meu trabalho. Cada projeto foi pensado do zero pra atender o posicionamento do cliente e converter o público certo.
-            </p>
-          </Reveal>
-        </div>
-
-        <div className="portfolio-grid">
-          {PORTFOLIO.map((p, i) =>
-          <Reveal key={i} delay={i * 100} className="portfolio-card">
-              <div className="browser-frame">
-                <div className="browser-bar">
-                  <span className="browser-dot d-red" aria-hidden="true"></span>
-                  <span className="browser-dot d-yellow" aria-hidden="true"></span>
-                  <span className="browser-dot d-green" aria-hidden="true"></span>
-                  <span className="browser-url">{p.url}</span>
-                </div>
-                <div className="browser-shot">
-                  <img src={p.img} alt={`Captura de tela de ${p.url}`} loading="lazy" />
-                </div>
-              </div>
-              <div className="portfolio-tags">
-                {p.tags.map((t) => <span key={t} className="portfolio-tag">{t}</span>)}
-              </div>
-              <h3 className="portfolio-name">
-                {p.namePrefix} <span className="portfolio-name-accent">{p.nameAccent}</span>
-              </h3>
-              <p className="portfolio-desc">{p.desc}</p>
-              <a className="portfolio-link" href={`${p.url}`} target="_blank" rel="noreferrer">
-                Ver projeto <span className="arrow">↗</span>
-              </a>
-            </Reveal>
-          )}
-        </div>
-
-        <Reveal>
-          <div className="logos-strip" aria-hidden="true">
-            <div className="logos-track">
-              <span>Bettina Rudolph</span>
-              <span>Gerônimo Theml</span>
-              <span>Saúde &amp; Estética</span>
-              <span>Profissionais autônomos</span>
-              <span>Grandes players</span>
-              <span>Bettina Rudolph</span>
-              <span>Gerônimo Theml</span>
-              <span>Saúde &amp; Estética</span>
-              <span>Profissionais autônomos</span>
-              <span>Grandes players</span>
-            </div>
-          </div>
-        </Reveal>
-
       </div>
     </section>);
 
 }
 
 // ─── ABOUT ──────────────────────────────────────────────────
-const DIFFS = [
-{ n: "01", t: "Foco em conversão, não em vaidade", d: "Métrica que importa é lead na sua agenda. Site bonito sem resultado é só portfólio caro." },
-{ n: "02", t: "SEO incluso em todo projeto", d: "Sem custo extra, sem upsell. Estrutura técnica pra você aparecer no Google desde o dia 1." },
-{ n: "03", t: "Transparência total", d: "Se você não precisa de um site novo, eu falo. Prefiro perder a venda a entregar algo que não vai te servir." },
-{ n: "04", t: "Experiência com grandes players", d: "A mesma estrutura usada em projetos que faturam milhões, aplicada ao tamanho do seu negócio." }];
-
-
-function About() {
+export function About() {
   return (
-    <section className="about" id="sobre">
-      <div className="container">
-        <div className="grid">
-          <Reveal dir="left">
-            <div className="about-photo">
-              <img src="assets/giovanne-portrait.webp" alt="Giovanne Marrone, web designer" loading="lazy" />
-              <span className="about-photo-tag">Giovanne Marrone</span>
-            </div>
-          </Reveal>
-          <div>
-            <Reveal><span className="section-label">05 / Sobre</span></Reveal>
-            <Reveal delay={80}><h2>Por que trabalhar comigo</h2></Reveal>
-            <Reveal delay={160}>
-              <p className="lead" style={{ marginTop: 24 }}>
-                Sou Giovanne, web designer focado em sites que geram resultado mensurável. Não vendo "presença digital" — vendo páginas que convertem visitante em cliente pagante.
-              </p>
-            </Reveal>
-            <div className="about-bullets">
-              {DIFFS.map((d, i) =>
-              <Reveal key={i} delay={i * 80} className="about-bullet" dir="right">
-                  <span className="num">{d.n}</span>
-                  <div>
-                    <h3 className="about-bullet-title">{d.t}</h3>
-                    <p>{d.d}</p>
-                  </div>
-                </Reveal>
-              )}
-            </div>
+    <section className="sec about" id="sobre">
+      <div className="wrap about-grid">
+        <div className="about-text">
+          <Title text="Sou Giovanne, web designer focado em *resultado mensurável.*" />
+          <p className="lead">
+            Não vendo "presença digital" — vendo páginas que convertem visitante em cliente pagante.
+          </p>
+          <div className="stats">
+            {STATS.map((s) =>
+            <div className="stat" key={s.label}>
+                <strong><CountUp to={s.to} prefix={s.prefix} suffix={s.suffix} /></strong>
+                <span>{s.label}</span>
+              </div>
+            )}
           </div>
         </div>
+        <figure className="about-photo">
+          <img src="assets/about-portrait.webp" alt="Giovanne Marrone, de braços cruzados, em um estúdio escuro" loading="lazy" decoding="async" />
+        </figure>
+      </div>
+
+      <div className="wrap clients">
+        <h3>Alguns dos clientes que atendi</h3>
+        <ul className="clients-grid">
+          {CLIENTS.map((c) =>
+          <li key={c.name}>
+              <img src={c.img} alt="" loading="lazy" width="48" height="48" />
+              <span>{c.name}</span>
+            </li>
+          )}
+          <li className="clients-you">
+            <a href={PROPOSAL_LINK} target="_blank" rel="noopener">+ Seu negócio aqui</a>
+          </li>
+        </ul>
+      </div>
+    </section>);
+
+}
+
+// ─── PLANS ──────────────────────────────────────────────────
+export function Plans() {
+  const onPointerMove = (event) => {
+    const card = event.target.closest(".plan");
+    if (!card) return;
+    const rect = card.getBoundingClientRect();
+    card.style.setProperty("--mx", `${event.clientX - rect.left}px`);
+    card.style.setProperty("--my", `${event.clientY - rect.top}px`);
+  };
+
+  return (
+    <section className="sec plans" id="planos">
+      <div className="wrap">
+        <div className="plans-head">
+          <Title text="Planos para cada *momento* do seu negócio." />
+          <p className="lead">
+            Três escopos. Cada um pensado pra um momento diferente do seu negócio. Me conta o que você precisa e eu te passo o valor.
+          </p>
+        </div>
+
+        <div className="plans-grid" onPointerMove={onPointerMove}>
+          {PLANS.map((plan) =>
+          <article className={`plan${plan.featured ? " featured" : ""}`} key={plan.name}>
+              <header className="plan-top">
+                <h3>{plan.name}</h3>
+                <span className="plan-badge">{plan.badge}</span>
+              </header>
+              <p className="plan-desc">{plan.desc}</p>
+
+              <div className="plan-summary">
+                <Icon name="check" />
+                <div>
+                  <strong>{plan.summary[0]}</strong>
+                  <span>{plan.summary[1]}</span>
+                  <span>{plan.summary[2]}</span>
+                </div>
+              </div>
+
+              <div className="plan-price">
+                <span className="plan-blur" aria-hidden="true">R$ 0.000</span>
+                <p>
+                  <span className="plan-lock"><Icon name="lock" /></span>
+                  <strong>Valor sob consulta</strong>
+                </p>
+              </div>
+
+              <a
+                className={`btn ${plan.featured ? "btn-solid" : "btn-line"} plan-cta`}
+                href={whatsapp(`Oi Giovanne, quero solicitar uma proposta de ${plan.name}.`)}
+                target="_blank"
+                rel="noopener">
+                {plan.cta}
+              </a>
+              <p className="plan-note">{plan.note}</p>
+
+              <div className="plan-includes">
+                <h4>O que está incluso</h4>
+                <ul>
+                  {plan.includes.map((item) =>
+                  <li key={item}><Icon name="check" />{item}</li>
+                  )}
+                </ul>
+              </div>
+            </article>
+          )}
+        </div>
+
+        <p className="plans-foot">{PAYMENT_TERMS}</p>
       </div>
     </section>);
 
 }
 
 // ─── FAQ ────────────────────────────────────────────────────
-const FAQS = [
-{
-  q: "Quanto tempo leva pra entregar o site?",
-  a: "Depende do escopo. Landing pages ficam prontas em 7 a 15 dias úteis. Sites institucionais entre 20 e 30 dias. E-commerces seguem cronograma personalizado. Todo prazo é alinhado antes do início, por escrito."
-},
-{
-  q: "Vou ficar dependente de você pra mexer no site depois?",
-  a: "Não. Entrego o acesso completo ao painel, com treinamento básico pra você editar textos, imagens e produtos sozinho. Suporte continuado é opcional, não obrigatório."
-},
-{
-  q: "Sites baratos no Wix ou template pronto não resolvem?",
-  a: "Resolvem se você quer só \"existir na internet\". Não resolvem se você quer que o site traga cliente. Template pronto não tem estrutura de conversão, copy estratégica nem SEO bem feito — e é por isso que a maioria dos profissionais paga barato uma vez e nunca vê retorno."
-},
-{
-  q: "E se meu site atual estiver bom? Preciso refazer?",
-  a: "Talvez não. Por isso o diagnóstico inicial é gratuito. Analiso seu site atual e te digo com honestidade se vale refazer, ajustar pontos específicos ou manter como está."
-},
-{
-  q: "Como funciona o pagamento?",
-  a: "50% na contratação e 50% na entrega. Sem taxas escondidas, sem mensalidades obrigatórias."
-}];
-
-
-function FAQ() {
+export function FAQ() {
   const [open, setOpen] = useState(0);
   return (
-    <section className="faq" id="faq">
-      <div className="container">
-        <div className="faq-grid">
-          <div>
-            <Reveal><span className="section-label">06 / FAQ</span></Reveal>
-            <Reveal delay={80}><h2>Perguntas frequentes</h2></Reveal>
-            <Reveal delay={160}>
-              <p className="lead" style={{ marginTop: 24 }}>
-                Dúvidas que aparecem antes da gente começar. Se a sua não está aqui, manda no WhatsApp.
-              </p>
-            </Reveal>
-            <Reveal delay={240}>
-              <a href="#cta" className="btn btn-ghost" style={{ marginTop: 32 }}>
-                Tirar dúvida no WhatsApp <span className="arrow">→</span>
-              </a>
-            </Reveal>
-          </div>
-          <div className="faq-list">
-            {FAQS.map((item, i) =>
-            <Reveal
-              key={i}
-              delay={i * 60}
-              as="div"
-              className={`faq-item${open === i ? " open" : ""}`}
-              onClick={() => setOpen(open === i ? -1 : i)}
-              style={{ cursor: "default" }}>
-              
-                <div className="faq-q">
-                  <span>{item.q}</span>
-                  <span className="faq-toggle">+</span>
-                </div>
-                <div className="faq-a"><div>{item.a}</div></div>
-              </Reveal>
-            )}
-          </div>
+    <section className="sec faq" id="faq">
+      <div className="wrap faq-grid">
+        <div>
+          <Title text="Perguntas *frequentes*" />
+          <p className="lead">
+            Dúvidas que aparecem antes da gente começar. Se a sua não está aqui, manda no WhatsApp.
+          </p>
+          <a href={whatsapp("Oi Giovanne, tenho uma dúvida sobre o meu site.")} target="_blank" rel="noopener" className="btn btn-line">
+            Tirar dúvida no WhatsApp
+          </a>
+        </div>
+        <div className="faq-list">
+          {FAQS.map((item, i) =>
+          <div className={`faq-item${open === i ? " open" : ""}`} key={item.q}>
+              <h3>
+                <button
+                type="button"
+                id={`faq-q-${i}`}
+                aria-expanded={open === i}
+                aria-controls={`faq-a-${i}`}
+                onClick={() => setOpen(open === i ? -1 : i)}>
+                  {item.q}
+                  <Icon name="plus" />
+                </button>
+              </h3>
+              <div className="faq-a" id={`faq-a-${i}`} role="region" aria-labelledby={`faq-q-${i}`}>
+                <div><p>{item.a}</p></div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </section>);
 
 }
 
-// ─── CTA ────────────────────────────────────────────────────
-function CTA() {
-  return (
-    <section className="cta" id="cta">
-      <div className="container">
-        <Reveal>
-          <div className="cta-card">
-            <span className="section-label" style={{ justifyContent: "center" }}>07 / Próximo passo</span>
-            <h2>Descubra o que está travando a conversão do seu site</h2>
-            <p className="lead">
-              Diagnóstico gratuito, direto e sem compromisso. Te mostro exatamente onde seu site está perdendo cliente — e se vale a pena investir em um novo ou ajustar o atual.
-            </p>
+// ─── FINALE — iris-out: the lens closes around the invitation ─
+export function Finale() {
+  const sectionRef = useRef(null);
+  const stageRef = useRef(null);
+  const [still, setStill] = useState(false);
 
-            <div className="actions" style={{ marginTop: 36 }}>
-              <a
-                href="https://wa.me/5551996574342?text=Oi%20Giovanne%2C%20quero%20o%20diagn%C3%B3stico%20gratuito%20do%20meu%20site."
-                target="_blank" rel="noopener"
-                className="btn btn-primary btn-lg">
-                
-                <svg className="wa" viewBox="0 0 24 24" aria-hidden="true">
-                  <path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.74.46 3.42 1.32 4.92L2 22l5.31-1.39a9.86 9.86 0 0 0 4.73 1.21h.01c5.46 0 9.91-4.45 9.91-9.91S17.5 2 12.04 2zm0 18.05h-.01c-1.5 0-2.96-.4-4.24-1.16l-.3-.18-3.15.83.84-3.07-.2-.32a8.18 8.18 0 0 1-1.27-4.34c0-4.52 3.68-8.2 8.2-8.2 2.19 0 4.25.85 5.8 2.4a8.16 8.16 0 0 1 2.4 5.8c.01 4.53-3.67 8.24-8.07 8.24zm4.5-6.16c-.25-.12-1.46-.72-1.69-.8-.23-.08-.39-.12-.56.12s-.64.8-.78.97c-.14.17-.29.19-.54.06-.25-.12-1.04-.38-1.98-1.22-.73-.65-1.23-1.46-1.37-1.71-.14-.25-.02-.38.11-.5.11-.11.25-.29.37-.43.12-.14.16-.25.25-.42.08-.17.04-.31-.02-.43-.06-.12-.56-1.34-.76-1.84-.2-.48-.4-.42-.56-.42-.14 0-.31-.02-.47-.02-.17 0-.43.06-.66.31-.23.25-.86.84-.86 2.05 0 1.21.88 2.38 1 2.54.12.17 1.74 2.66 4.22 3.73.59.25 1.05.4 1.41.52.59.19 1.13.16 1.56.1.48-.07 1.46-.6 1.66-1.17.2-.58.2-1.07.14-1.17-.06-.1-.23-.16-.48-.28z" />
-                </svg>
-                Falar com Giovanne no WhatsApp <span className="arrow">→</span>
-              </a>
-            </div>
-            <div className="micro">Resposta em até 2 horas em horário comercial.</div>
-          </div>
-        </Reveal>
+  useEffect(() => {
+    const stage = stageRef.current;
+    if (prefersReducedMotion()) {
+      setStill(true);
+      stage.style.setProperty("--p", 1);
+      return;
+    }
+    return onFrame(() => {
+      const rect = sectionRef.current.getBoundingClientRect();
+      const vh = stage.offsetHeight;
+      const vw = stage.offsetWidth;
+      if (rect.top > window.innerHeight || rect.bottom < 0) return;
+      const p = clamp(-rect.top / (rect.height - vh) + 0.06);
+      const e = 1 - Math.pow(1 - clamp(p / 0.86), 3);
+      const open = Math.hypot(vw, vh) / 2 + 80;
+      const closed = Math.max(Math.min(vh * 0.43, vw * 0.4), 330);
+      stage.style.setProperty("--r", `${open + (closed - open) * e}px`);
+      stage.style.setProperty("--a", `${e * 60 - 30}deg`);
+      stage.style.setProperty("--p", e);
+    });
+  }, []);
+
+  return (
+    <section className={`finale${still ? " still" : ""}`} id="contato" data-scroll-end ref={sectionRef}>
+      <div className="finale-stage" ref={stageRef}>
+        <div className="finale-light" aria-hidden="true" />
+        <div className="finale-copy">
+          <img src="assets/logo.webp" alt="" width="52" height="52" loading="lazy" />
+          <h2>Pronto pra ter um site que <em>vende por você?</em></h2>
+          <p>
+            Me conta sobre o seu negócio e o que você precisa. Te respondo com escopo, prazo e valor, direto no WhatsApp.
+          </p>
+          <a href={PROPOSAL_LINK} target="_blank" rel="noopener" className="btn btn-solid">
+            <Icon name="whatsapp" />
+            Falar com Giovanne no WhatsApp
+          </a>
+          <small>Resposta em até 2 horas em horário comercial.</small>
+        </div>
+        <Blades />
       </div>
     </section>);
 
 }
 
 // ─── FOOTER ─────────────────────────────────────────────────
-function Footer() {
+export function Footer() {
   return (
     <footer className="footer">
-      <div className="container">
+      <div className="wrap footer-top">
         <div className="brand">
-          <img src="assets/logo.webp" alt="Giovanne Marrone" className="brand-logo" />
-          <span className="brand-text">
-            <span className="name">Giovanne Marrone</span>
-            <span className="role">web designer · feito pra converter</span>
-          </span>
+          <img src="assets/logo.webp" alt="" width="34" height="34" loading="lazy" />
+          <span>Giovanne Marrone</span>
         </div>
-        <div className="footer-links">
-          <a href="#problema">Problema</a>
-          <a href="#solucao">Solução</a>
-          <a href="#projetos">Projetos</a>
-          <a href="#faq">FAQ</a>
-          <a href="#cta">Contato</a>
-        </div>
-        <div>© {new Date().getFullYear()} · feito pra converter</div>
+        <nav aria-label="Rodapé">
+          {LINKS.map(([label, href]) => <a key={href} href={href}>{label}</a>)}
+        </nav>
+        <a href="mailto:admin@gmarrone.com.br">admin@gmarrone.com.br</a>
+      </div>
+      <div className="wrap footer-end">
+        <span>© {new Date().getFullYear()} Giovanne Marrone</span>
+        <span>Feito pra converter</span>
       </div>
     </footer>);
 
 }
-
-// Make available to App.jsx
-export {
-  Nav, HeroV1, HeroV2, HeroV3,
-  Problem, Solution, Types, Proof, About, FAQ, CTA, Footer
-};

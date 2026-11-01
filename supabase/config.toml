@@ -1,0 +1,23 @@
+# Applied to the hosted project with `supabase config push`. Anything left out here is
+# pushed as a CLI default, so the settings below that match the project's own defaults
+# stay listed: without them a push would turn off TOTP and weaken the email limits.
+project_id = "gmarrone"
+
+[auth]
+site_url = "https://gmarrone.com.br"
+additional_redirect_urls = []
+# One account only, created by hand in the dashboard. This is what closes the signup
+# API; leaving the button out of the page would not.
+enable_signup = false
+enable_anonymous_sign_ins = false
+
+[auth.mfa.totp]
+enroll_enabled = true
+verify_enabled = true
+
+[auth.email]
+# Despite the name this switches the whole email provider, password login included.
+enable_signup = true
+enable_confirmations = true
+max_frequency = "1m0s"
+otp_length = 8

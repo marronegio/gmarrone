@@ -1,0 +1,26 @@
+:root {
+  /* Brand colors: the site's navy and azure, plus the logo's ice and indigo */
+  --bg: #070b15;
+  --bg-2: #0a1020;
+  --surface: #111a2e;
+  --surface-2: #16203a;
+  --ink: #f0f4fb;
+  --ink-2: #d4dcec;
+  --muted: #98a3bb;
+  --accent: #4d9bff;
+  --accent-ink: #02112e;
+  --ice: #dbeaff;
+  --indigo: #4a3fd6;
+  --danger: #ff6b5b;
+  --line: rgba(255, 255, 255, 0.1);
+  --line-strong: rgba(255, 255, 255, 0.22);
+
+  --font: "Archivo", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --serif: "Bodoni Moda", "Times New Roman", serif;
+
+  --gutter: clamp(20px, 4vw, 64px);
+  --sec: clamp(96px, 13vw, 190px);
+  --ease: cubic-bezier(.16, 1, .3, 1);
+
+  color-scheme: dark;
+}
