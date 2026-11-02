@@ -1,27 +1,15 @@
 import React from "react";
 import { lockScroll, prefersReducedMotion } from "../lib/scroll.js";
 import { whatsapp } from "../lib/offer.js";
+import { fetchProposal } from "./api.js";
 import { createField, envelopeOutline } from "./field.js";
 import { Envelope } from "./Envelope.jsx";
 import { Page } from "./Page.jsx";
+import { HERO_PLATE } from "./scenes.jsx";
 
 const { useCallback, useEffect, useRef, useState } = React;
 
-const API = import.meta.env.VITE_SUPABASE_URL;
-const KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 const UUID = /^[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i;
-
-// Plain fetch: a client's first impression should not wait for the whole Supabase client.
-async function fetchProposal(id) {
-  const response = await fetch(`${API}/rest/v1/rpc/get_proposal`, {
-    method: "POST",
-    headers: { apikey: KEY, "Content-Type": "application/json" },
-    body: JSON.stringify({ proposal_id: id }),
-  });
-  if (!response.ok) throw new Error(`get_proposal: ${response.status}`);
-  const [proposal] = await response.json();
-  return proposal ?? null;
-}
 
 function Notice({ failed, onRetry }) {
   return (
@@ -81,6 +69,7 @@ export default function App() {
   useEffect(() => {
     if (!proposal) return;
     document.title = `Proposta para ${proposal.client}`;
+    new Image().src = HERO_PLATE; // fetched behind the envelope, the iris opens straight onto it
 
     let cancelled = false;
     const timers = [];

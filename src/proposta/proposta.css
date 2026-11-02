@@ -7,6 +7,8 @@
 @import "../tokens.css";
 @import "../lib/device.css";
 @import "./page.css";
+@import "./simulation.css";
+@import "./approve.css";
 
 /* Typed so the iris can be animated from plain CSS */
 @property --open { syntax: "<length>"; inherits: true; initial-value: 0px; }
@@ -16,6 +18,7 @@
 html, body { margin: 0; padding: 0; }
 html {
   background: var(--bg);
+  scrollbar-gutter: stable; /* locking the scroll for a dialog must not nudge the page sideways */
   scrollbar-color: var(--surface-2) var(--bg);
   -webkit-text-size-adjust: 100%;
 }

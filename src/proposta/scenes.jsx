@@ -1,9 +1,10 @@
 import React from "react";
-import { clamp, onFrame, prefersReducedMotion } from "../lib/scroll.js";
+import { clamp, hasFinePointer, onFrame, prefersReducedMotion } from "../lib/scroll.js";
 import { DeviceFrame, crossing, deviceScreens, trackLength } from "../lib/device.jsx";
 import { CLIENTS, DIFFS, FAQS, PROJECTS, STATS } from "../lib/offer.js";
 import { Title, Words, useInView } from "../lib/title.jsx";
-import { Blueprint } from "./Blueprint.jsx";
+import { ApproveButton } from "./Approve.jsx";
+import { Simulation } from "./Simulation.jsx";
 
 const { useEffect, useRef, useState } = React;
 
@@ -46,7 +47,9 @@ function HexMark() {
 
 }
 
-// ─── HERO — the lens, with the project's data sheet ─────────
+// ─── HERO — a corridor of sites, seen through the lens ──────
+export const HERO_PLATE = "../assets/proposta-hero.webp";
+
 function Reticle() {
   return (
     <svg className="reticle" viewBox="0 0 600 600" aria-hidden="true">
@@ -61,13 +64,40 @@ function Reticle() {
 
 export function Hero({ proposal, plan, reference, headingRef }) {
   const ref = useRef(null);
+  const [pinned, setPinned] = useState(false);
   const { client, site_type: siteType } = proposal;
 
   useEffect(() => {
     if (prefersReducedMotion()) return;
-    return onFrame((y) => {
-      ref.current.style.setProperty("--out", clamp(y / (window.innerHeight * 0.85)).toFixed(4));
+    const hero = ref.current;
+
+    // Held in place while the camera travels, unless it is taller than the screen: pinned, the
+    // data sheet at its foot would fade before anyone could read it.
+    const fit = new ResizeObserver(() => setPinned(hero.offsetHeight <= window.innerHeight));
+    fit.observe(hero);
+
+    // The picture and the lens drift apart with the pointer: two planes out of a flat image.
+    const aim = { x: 0, y: 0 };
+    const now = { x: 0, y: 0 };
+    const onMove = (event) => {
+      aim.x = (event.clientX / window.innerWidth - 0.5) * 2;
+      aim.y = (event.clientY / window.innerHeight - 0.5) * 2;
+    };
+    if (hasFinePointer()) window.addEventListener("pointermove", onMove, { passive: true });
+
+    const off = onFrame((y) => {
+      now.x += (aim.x - now.x) * 0.05;
+      now.y += (aim.y - now.y) * 0.05;
+      hero.style.setProperty("--out", clamp(y / (window.innerHeight * 0.85)).toFixed(4));
+      hero.style.setProperty("--mx", now.x.toFixed(4));
+      hero.style.setProperty("--my", now.y.toFixed(4));
     });
+
+    return () => {
+      off();
+      fit.disconnect();
+      window.removeEventListener("pointermove", onMove);
+    };
   }, []);
 
   const specs = [
@@ -76,29 +106,34 @@ export function Hero({ proposal, plan, reference, headingRef }) {
   ];
 
   return (
-    <section className="prop-hero" id="inicio" data-chapter="Visão geral" ref={ref}>
-      <div className="hero-brand">
-        <img src="../assets/logo.webp" alt="" width="30" height="30" />
-        <span>Giovanne Marrone</span>
-      </div>
+    <div className={`hero-run${pinned ? " pinned" : ""}`}>
+      <section className="prop-hero" id="inicio" data-chapter="Visão geral" ref={ref}>
+        <div className="hero-plate" aria-hidden="true">
+          <img src={HERO_PLATE} alt="" width="1672" height="941" />
+        </div>
 
-      <div className="hero-copy">
-        <p className="prop-type">{siteType}</p>
-        <h1 ref={headingRef} tabIndex={-1}>Proposta para <em>{client}</em></h1>
-        {plan && <p className="lead">{plan.desc}</p>}
-        <p className="prop-by">Preparada por Giovanne Marrone em {longDate.format(new Date(proposal.created_at))}</p>
-      </div>
+        <div className="hero-lens"><Reticle /></div>
 
-      <div className="hero-lens"><Reticle /></div>
+        <div className="hero-brand">
+          <img src="../assets/logo.webp" alt="" width="30" height="30" />
+          <span>Giovanne Marrone</span>
+        </div>
 
-      <dl className="specs">
-        {specs.map(([label, value]) =>
-          <div key={label}>
-            <dt>{label}</dt>
-            <dd>{value}</dd>
-          </div>)}
-      </dl>
-    </section>);
+        <div className="hero-copy">
+          <h1 ref={headingRef} tabIndex={-1}>Proposta para <em>{client}</em></h1>
+          {plan && <p className="lead">{plan.desc}</p>}
+          <p className="prop-by">{siteType}, preparada por Giovanne Marrone em {longDate.format(new Date(proposal.created_at))}</p>
+        </div>
+
+        <dl className="specs">
+          {specs.map(([label, value]) =>
+            <div key={label}>
+              <dt>{label}</dt>
+              <dd>{value}</dd>
+            </div>)}
+        </dl>
+      </section>
+    </div>);
 
 }
 
@@ -141,11 +176,13 @@ export function Idea({ client }) {
 
 }
 
-// ─── SCOPE — the blueprint of the client's site ─────────────
-export function Scope({ plan }) {
+// ─── SCOPE — the client's site, running on a laptop and a phone ─
+export function Scope({ plan, client }) {
   const [active, setActive] = useState(0);
   const listRef = useRef(null);
-  const drawRef = useScrub();
+  // Measured on the grid, which keeps moving while the laptop holds still: it lands closed, the
+  // lid opens with the scroll, and the first item arrives as the screen lights up.
+  const gridRef = useScrub((rect, vh) => (vh * 0.3 - rect.top) / (vh * 0.46));
 
   useEffect(() => {
     const items = [...listRef.current.children];
@@ -171,13 +208,16 @@ export function Scope({ plan }) {
       <div className="wrap">
         <header className="scope-head">
           <Title text={plan.titles.scope} />
-          <p className="lead">Tudo o que entra no projeto, parte por parte. Role a página e veja onde cada item aparece.</p>
+          <div>
+            <p className="lead">Tudo o que entra no projeto, parte por parte. Role a página e veja onde cada item aparece.</p>
+            <p className="scope-note">Simulação ilustrativa. O design do seu projeto é criado do zero.</p>
+          </div>
         </header>
 
-        {/* The drawing comes first so that on a phone it can stick above the list */}
-        <div className="scope-grid">
-          <div className="scope-draw" ref={drawRef}>
-            <Blueprint type={plan.name} active={active} />
+        {/* The model comes first so that on a phone it can stick above the list */}
+        <div className="scope-grid" ref={gridRef}>
+          <div className="scope-draw">
+            <Simulation plan={plan} client={client} active={active} listRef={listRef} />
           </div>
 
           <ol className="scope-list" ref={listRef}>
@@ -374,7 +414,7 @@ export function Path({ plan, deposit, balance }) {
   const ref = useScrub(passing);
 
   const steps = [
-    { t: "Aprovação", d: "Você aprova pelo WhatsApp e paga os primeiros 50%.", pay: deposit },
+    { t: "Aprovação", d: "Você aprova aqui na proposta, recebe o contrato e paga os primeiros 50%.", pay: deposit },
     { t: "Alinhamento", d: "Entendo seu posicionamento, público e oferta. O prazo fica combinado por escrito." },
     { t: "Copy e design", d: "Escrevo o texto do zero e desenho o layout com a identidade do seu negócio." },
     { t: "Integrações e SEO", d: "Conecto suas ferramentas e deixo a estrutura técnica pronta pro Google." },
@@ -505,7 +545,7 @@ export function Doubts({ ask }) {
 }
 
 // ─── FINALE — iris-out: the film closes on the decision ─────
-export function Finale({ approve, ask }) {
+export function Finale({ approval, ask }) {
   const sectionRef = useRef(null);
   const stageRef = useRef(null);
   const [still, setStill] = useState(false);
@@ -539,13 +579,17 @@ export function Finale({ approve, ask }) {
           <span className="close-photo">
             <img src="../assets/about-portrait.webp" alt="" loading="lazy" width="104" height="120" />
           </span>
-          <h2>Vamos <em>começar?</em></h2>
-          <p className="lead">Aprovando agora, a gente alinha os próximos passos direto no WhatsApp.</p>
+          {approval.approved ?
+            <h2>Proposta <em className="yes">aprovada!</em></h2> :
+            <h2>Vamos <em>começar?</em></h2>}
+          <p className="lead">{approval.approved ?
+            "Em breve você receberá o contrato para começarmos oficialmente o projeto." :
+            "Aprovando agora, você recebe o contrato e a gente começa oficialmente o projeto."}</p>
           <div className="close-actions">
-            <a className="btn" href={approve} target="_blank" rel="noopener">Aprovar pelo WhatsApp</a>
+            <ApproveButton approval={approval} label="Aprovar proposta" done="Proposta aprovada" />
             <a className="btn btn-line" href={ask} target="_blank" rel="noopener">Tirar uma dúvida</a>
           </div>
-          <small>Resposta em até 2 horas em horário comercial.</small>
+          <small>Dúvidas respondidas em até 2 horas em horário comercial.</small>
         </div>
         {!still &&
           <div className="iris-blades" aria-hidden="true">

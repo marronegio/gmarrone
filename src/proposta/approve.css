@@ -1,0 +1,154 @@
+/* ──────────────────────────────────────────────────────────────
+   Approve
+   The one green on a blue film: it only ever means "approved".
+   Sparks are drawn on the canvas around the button, the glow and
+   the light running round its edge are plain CSS.
+   ────────────────────────────────────────────────────────────── */
+
+:root { --neon: #2bff88; }
+
+.go {
+  --reach: 38px;
+  position: relative;
+  isolation: isolate;
+  display: inline-flex;
+  flex: none;
+}
+.go-small { --reach: 24px; }
+
+/* The tube's light on the air around it */
+.go::before {
+  content: "";
+  position: absolute; inset: -5px;
+  z-index: -1;
+  border-radius: 999px;
+  background: var(--neon);
+  filter: blur(20px);
+  opacity: .5;
+  animation: neon-breathe 2.8s ease-in-out infinite;
+  transition: opacity .4s ease;
+}
+.go-small::before { inset: -2px; filter: blur(13px); }
+.go:hover::before { animation-play-state: paused; opacity: .95; }
+@keyframes neon-breathe { 50% { opacity: .85; } }
+
+.go canvas {
+  position: absolute;
+  left: calc(var(--reach) * -1);
+  top: calc(var(--reach) * -1);
+  width: calc(100% + var(--reach) * 2);
+  height: calc(100% + var(--reach) * 2);
+  pointer-events: none;
+}
+
+/* Two classes: the imports come before .btn, which would otherwise win */
+.go .btn-go {
+  position: relative;
+  gap: 8px;
+  background: var(--neon);
+  color: #02200f;
+  box-shadow: 0 0 0 1px rgba(190, 255, 216, .75), 0 10px 34px -6px rgba(43, 255, 136, .6);
+}
+.go .btn-go:hover { background: #7dffb4; box-shadow: 0 0 0 1px #e6fff0, 0 12px 44px -4px rgba(43, 255, 136, .85); }
+.go .btn-go:focus-visible { outline-color: #e6fff0; }
+.go .btn-go[aria-busy="true"] { cursor: progress; }
+.btn-go svg { width: 18px; height: 18px; flex: none; }
+.btn-go svg path { fill: none; stroke: currentColor; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; }
+
+/* A point of light runs around the edge, like the one on the sealed envelope */
+.btn-go::after {
+  content: "";
+  position: absolute; inset: -1px;
+  padding: 1.5px;
+  border-radius: inherit;
+  background: conic-gradient(from var(--spin), transparent 0 66%, #b9ffd6 86%, #fff 96%, transparent);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+  animation: spin 3.2s linear infinite;
+  pointer-events: none;
+}
+
+/* Approved: the light settles, the decision is made */
+.go.done::before { opacity: .16; animation: none; }
+.go.done .btn-go {
+  background: rgba(43, 255, 136, .13);
+  color: #8dffbe;
+  box-shadow: inset 0 0 0 1px rgba(43, 255, 136, .62);
+}
+.go.done .go .btn-go:hover { background: rgba(43, 255, 136, .2); }
+.go.done .btn-go::after { display: none; }
+
+/* ── Dialog ───────────────────────────── */
+.approval {
+  width: min(100% - 32px, 500px);
+  max-width: none;
+  margin: auto;
+  padding: 0;
+  overflow: visible;
+  border: 0;
+  background: none;
+  color: var(--ink);
+}
+.approval[open] {
+  clip-path: polygon(
+    50% calc(50% - var(--open)),
+    calc(50% + var(--open) * .866) calc(50% - var(--open) * .5),
+    calc(50% + var(--open) * .866) calc(50% + var(--open) * .5),
+    50% calc(50% + var(--open)),
+    calc(50% - var(--open) * .866) calc(50% + var(--open) * .5),
+    calc(50% - var(--open) * .866) calc(50% - var(--open) * .5));
+  animation: approval-open .95s cubic-bezier(.76, 0, .24, 1) both;
+}
+@keyframes approval-open { from { --open: 0px; } to { --open: 760px; } }
+.approval::backdrop {
+  background: rgba(3, 6, 14, .8);
+  backdrop-filter: blur(7px);
+  animation: appear .5s ease both;
+}
+
+.approval-card {
+  display: grid;
+  justify-items: center;
+  gap: 14px;
+  padding: clamp(28px, 6vw, 44px) clamp(22px, 6vw, 44px) clamp(22px, 5vw, 32px);
+  border-radius: 18px;
+  background: var(--surface);
+  box-shadow: 0 0 0 1px rgba(170, 205, 255, .2), 0 44px 110px -24px rgba(2, 6, 16, .9);
+  text-align: center;
+}
+.approval h2 { font-size: clamp(30px, 6vw, 44px); line-height: 1.08; }
+.approval em, .close-copy em.yes { color: var(--neon); }
+.approval .lead { color: var(--ink-2); }
+.approval .btn { margin-top: 8px; }
+.approval-oops {
+  padding: 6px 4px;
+  border: 0;
+  background: none;
+  color: var(--muted);
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
+  transition: color .3s ease;
+}
+.approval-oops:hover { color: var(--ink); }
+
+.approval-mark { width: 84px; height: 84px; overflow: visible; filter: drop-shadow(0 0 10px rgba(43, 255, 136, .75)); }
+.approval-mark polygon, .approval-mark path {
+  fill: none;
+  stroke: var(--neon);
+  stroke-width: 2.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: draw 1.1s cubic-bezier(.65, 0, .35, 1) .55s forwards;
+}
+.approval-mark path { stroke-width: 4.5; animation-duration: .6s; animation-delay: 1.3s; }
+
+@media (prefers-reduced-motion: reduce) {
+  .go::before, .btn-go::after { animation: none; }
+  .btn-go::after { display: none; }
+  .approval[open], .approval::backdrop { clip-path: none; animation: none; }
+  .approval-mark polygon, .approval-mark path { animation: none; stroke-dashoffset: 0; }
+}

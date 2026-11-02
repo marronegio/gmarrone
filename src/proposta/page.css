@@ -67,67 +67,116 @@ ol { margin: 0; padding: 0; list-style: none; }
 .hud .btn-small { flex: none; min-height: 38px; padding: 0 18px; font-size: 14px; }
 
 /* ── Hero ─────────────────────────────── */
+/* The scene runs longer than the screen, so the camera can travel while the hero holds still */
+.hero-run.pinned { height: calc(100svh + 70vh); }
+.hero-run.pinned .prop-hero { position: sticky; top: 0; }
+
 .prop-hero {
   --out: 0;
+  --mx: 0;
+  --my: 0;
   position: relative;
   min-height: 100vh;
   min-height: 100svh;
   display: grid;
-  grid-template-columns: minmax(0, 1.12fr) minmax(0, .88fr);
+  grid-template-columns: minmax(0, 1fr);
   grid-template-rows: auto 1fr auto;
-  column-gap: clamp(24px, 4vw, 64px);
   padding: 22px var(--gutter) 0;
   overflow: clip; /* the lens grows past the screen as the camera goes through it */
 }
+
+/* The corridor's dark centre sits on the axis of the iris, which opens and closes the film */
+.hero-plate {
+  --fx: 44.5%; /* where the corridor vanishes in the picture */
+  --fy: 42%;
+  --dim: .48; /* how much of the picture shows through */
+  position: absolute; inset: 0;
+  overflow: hidden;
+  opacity: calc(var(--dim) * (1 - var(--out) * 1.18));
+  -webkit-mask-image: linear-gradient(#000 56%, transparent 97%);
+  mask-image: linear-gradient(#000 56%, transparent 97%);
+}
+.hero-plate img {
+  position: absolute; left: 50%; top: 46%;
+  width: max(118%, 205svh);
+  max-width: none;
+  height: auto;
+  translate: calc(var(--fx) * -1 + var(--mx) * -16px) calc(var(--fy) * -1 + var(--my) * -10px);
+  transform: scale(calc(1 + var(--out) * .6));
+  transform-origin: var(--fx) var(--fy);
+  will-change: transform;
+  /* Out of focus behind the iris, sharp as the lens finishes drawing, then it never quite stops */
+  animation: rack-focus 3.2s cubic-bezier(.3, .1, .2, 1) .5s backwards, creep 46s ease-in-out 3.7s infinite alternate;
+}
+@keyframes rack-focus { from { opacity: 0; transform: scale(1.16); filter: blur(24px); } }
+@keyframes creep { to { scale: 1.05; } }
+
+.hero-lens {
+  position: absolute; inset: 0;
+  width: min(112svh, 104vw);
+  aspect-ratio: 1;
+  margin: auto;
+  translate: calc(var(--mx) * 12px) calc(var(--my) * 8px);
+  opacity: calc(1 - var(--out) * 1.2);
+  transform: scale(calc(1 + var(--out) * 1.5)) rotate(calc(var(--out) * 40deg));
+}
 .hero-brand {
-  grid-column: 1 / -1;
+  position: relative;
   display: flex;
   align-items: center;
   gap: 10px;
   font-size: 15px;
   font-weight: 600;
   font-stretch: 112%;
+  opacity: calc(1 - var(--out) * 2);
   animation: arrive 1.2s var(--ease) 1.5s both;
 }
 .hero-copy {
-  align-self: center;
+  position: relative;
+  place-self: center;
   display: grid;
-  justify-items: start;
-  gap: 16px;
+  justify-items: center;
+  gap: 18px;
+  max-width: min(100%, 1040px);
+  padding-block: 28px;
+  text-align: center;
+  text-shadow: 0 2px 28px rgba(7, 11, 21, .7);
   opacity: calc(1 - var(--out) * 1.5);
-  transform: translateY(calc(var(--out) * -80px));
+  transform: scale(calc(1 + var(--out) * .32)); /* the title comes at the camera and goes past it */
+}
+/* A long name leaves the corridor and runs over the bright walls, so the dark travels with the text */
+.hero-copy::before {
+  content: "";
+  position: absolute; inset: -18% -10%;
+  z-index: -1;
+  background: linear-gradient(90deg, transparent, rgba(7, 11, 21, .86) 14%, rgba(7, 11, 21, .86) 86%, transparent);
+  -webkit-mask-image: linear-gradient(transparent, #000 30%, #000 76%, transparent);
+  mask-image: linear-gradient(transparent, #000 30%, #000 76%, transparent);
+  animation: fade-in 1.4s ease 1.05s both;
 }
 .hero-copy > * { animation: arrive 1.4s var(--ease) both; animation-delay: calc(1.05s + var(--n, 0) * .12s); }
 .hero-copy > :nth-child(2) { --n: 1; }
 .hero-copy > :nth-child(3) { --n: 2; }
-.hero-copy > :nth-child(4) { --n: 3; }
 @keyframes arrive { from { opacity: 0; transform: translateY(26px) scale(.985); filter: blur(10px); } }
 
-.prop-type { font-size: 16px; color: var(--ink-2); }
 .prop-hero h1 {
   font-size: clamp(38px, 5.5vw, 96px);
   line-height: 1.04;
   letter-spacing: -0.03em;
-  text-wrap: pretty;
   overflow-wrap: anywhere;
 }
 .prop-hero h1 em { display: block; font-size: 1.08em; line-height: 1; }
+.hero-copy .lead { color: var(--ink-2); }
 .prop-by { font-size: 14px; color: var(--muted); }
 
-.hero-lens {
-  align-self: center;
-  justify-self: center;
-  width: min(100%, 66vh);
-  aspect-ratio: 1;
-  opacity: calc(1 - var(--out) * 1.2);
-  transform: scale(calc(1 + var(--out) * 1.5)) rotate(calc(var(--out) * 40deg));
-}
 .reticle { width: 100%; height: 100%; overflow: visible; }
-.reticle * { fill: none; stroke: rgba(140, 195, 255, .5); stroke-width: 1; transform-box: view-box; transform-origin: 50% 50%; }
+.reticle * { fill: none; stroke: rgba(140, 195, 255, .5); stroke-width: .6; transform-box: view-box; transform-origin: 50% 50%; }
 .reticle polygon { stroke-dasharray: 1; stroke-dashoffset: 1; animation: draw 1.9s cubic-bezier(.65, 0, .35, 1) forwards; }
 .ret-outer { animation-delay: 1.15s !important; }
+/* The inner rings would cut through the title, so they only appear once it clears the way */
+.ret-middle, .ret-inner { opacity: clamp(0, var(--out) * 4 - 1.2, 1); }
 .ret-middle { animation-delay: 1.35s !important; stroke: rgba(77, 155, 255, .7) !important; }
-.ret-inner { animation-delay: 1.55s !important; stroke: var(--ice) !important; stroke-width: 1.4 !important; }
+.ret-inner { animation-delay: 1.55s !important; stroke: var(--ice) !important; stroke-width: .8 !important; }
 @keyframes draw { to { stroke-dashoffset: 0; } }
 .ret-ticks {
   stroke-width: 9 !important;
@@ -140,13 +189,21 @@ ol { margin: 0; padding: 0; list-style: none; }
 @keyframes fade-in { from { opacity: 0; } }
 
 .specs {
-  grid-column: 1 / -1;
+  position: relative;
+  isolation: isolate;
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   margin-bottom: 22px;
   border-top: 1px solid var(--line-strong);
   opacity: calc(1 - var(--out) * 1.8);
   animation: fade-in 1.4s ease 1.7s both;
+}
+/* The lens and the picture end here: the data sheet reads on clean ground */
+.specs::before {
+  content: "";
+  position: absolute; inset: 0 calc(var(--gutter) * -1) -22px;
+  z-index: -1;
+  background: linear-gradient(rgba(7, 11, 21, .78), var(--bg) 60%);
 }
 .specs > div { min-width: 0; padding: 14px 18px 0; border-left: 1px solid var(--line); }
 .specs > div:first-child { padding-left: 0; border-left: 0; }
@@ -202,14 +259,17 @@ ol { margin: 0; padding: 0; list-style: none; }
 .flow span { color: var(--muted); }
 
 /* ── Blueprint ────────────────────────── */
+.scope { overflow-x: clip; } /* the laptop leans past the screen edge when the camera turns */
+.scope-note { margin-top: 8px; font-size: 14px; color: var(--muted); }
 .scope-head { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: 24px clamp(32px, 6vw, 96px); align-items: end; }
 .scope-grid {
+  --p: 0;
   display: grid;
-  grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
-  gap: clamp(32px, 5vw, 80px);
+  grid-template-columns: minmax(0, 4fr) minmax(0, 8fr);
+  gap: clamp(24px, 3vw, 56px);
   margin-top: 28px;
 }
-.scope-list { grid-column: 1; grid-row: 1; padding-block: 12vh 22vh; }
+.scope-list { grid-column: 1; grid-row: 1; padding-block: 40vh 22vh; }
 .scope-list li {
   position: relative;
   display: flex;
@@ -227,39 +287,13 @@ ol { margin: 0; padding: 0; list-style: none; }
 .scope-list p { max-width: 42ch; color: var(--ink-2); font-size: clamp(16px, 1.25vw, 19px); }
 
 .scope-draw {
-  --p: 0;
   grid-column: 2;
   grid-row: 1;
   position: sticky;
-  top: 13vh;
+  top: 9vh;
   align-self: start;
-  height: 74vh;
-  display: grid;
-  place-items: center;
+  height: 84vh;
 }
-.bp { width: 100%; max-height: 100%; overflow: visible; }
-.bp rect, .bp line, .bp path, .bp polygon, .bp circle {
-  fill: none;
-  stroke: rgba(140, 195, 255, .34);
-  stroke-width: 1.1;
-  stroke-linecap: round;
-  stroke-dasharray: 1;
-  stroke-dashoffset: calc(1 - var(--p));
-  transition: stroke .45s ease, fill .45s ease;
-}
-.bp .solid { fill: rgba(140, 195, 255, .05); }
-.bp-part { transition: filter .45s ease; }
-.bp-part.on { filter: drop-shadow(0 0 7px rgba(77, 155, 255, .85)); }
-.bp-part.on rect, .bp-part.on line, .bp-part.on path, .bp-part.on polygon, .bp-part.on circle { stroke: var(--ice); stroke-width: 1.5; }
-.bp-part.on .solid { fill: rgba(77, 155, 255, .3); }
-.bp .bp-scan {
-  stroke: none;
-  stroke-dasharray: none;
-  fill: rgba(160, 205, 255, .55);
-  opacity: var(--p);
-  animation: scan 5.5s cubic-bezier(.45, 0, .55, 1) infinite alternate;
-}
-@keyframes scan { to { transform: translateY(388px); } }
 
 /* ── Reel ─────────────────────────────── */
 .reel { position: relative; padding-block: var(--sec); }
@@ -546,7 +580,7 @@ ol { margin: 0; padding: 0; list-style: none; }
 .close-copy .lead { color: var(--ink-2); }
 .close-photo { display: block; width: 104px; height: 104px; overflow: hidden; border-radius: 50%; box-shadow: 0 0 0 1px var(--accent), 0 0 34px rgba(77, 155, 255, .4); }
 .close-photo img { width: 100%; height: 100%; object-fit: cover; transform: scale(2.3); transform-origin: 50% 7%; }
-.close-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; margin-top: 6px; }
+.close-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 18px 14px; margin-block: 22px 16px; }
 .close small { font-size: 14px; color: var(--muted); }
 
 .iris-blades {
@@ -571,10 +605,11 @@ ol { margin: 0; padding: 0; list-style: none; }
 .prop-foot a { margin-left: auto; }
 .prop-foot a:hover { color: var(--ink); }
 
+@media (min-width: 1500px) {
+  .scope .wrap { max-width: 1760px; }
+}
+
 @media (max-width: 1100px) {
-  .prop-hero { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto 1fr auto; }
-  .hero-copy { position: relative; z-index: 1; grid-row: 2; grid-column: 1; }
-  .hero-lens { grid-row: 2; grid-column: 1; width: min(92vw, 62vh); opacity: calc(.5 - var(--out)); }
   .diffs { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .diffs li:nth-child(3) { padding-left: 0; border-left: 0; }
   .diffs li:nth-child(n + 3) { margin-top: 20px; }
@@ -586,11 +621,10 @@ ol { margin: 0; padding: 0; list-style: none; }
   .scope-grid { display: block; margin-top: 18px; }
   .scope-draw {
     top: 58px; z-index: 3;
-    height: 34vh;
-    padding-block: 10px 18px;
-    background: linear-gradient(var(--bg) 90%, transparent);
+    height: clamp(280px, 42vh, 460px);
+    background: linear-gradient(var(--bg) 92%, transparent);
   }
-  .scope-list { padding-block: 6vh 14vh; }
+  .scope-list { padding-block: 22vh 14vh; }
   .scope-list li { min-height: 32vh; }
 
   .reel-track { flex-direction: column; width: 100%; }
@@ -632,15 +666,29 @@ ol { margin: 0; padding: 0; list-style: none; }
   .diffs li, .diffs li:nth-child(3) { padding: 16px 0 0; border-left: 0; }
   .diffs li:nth-child(n + 3) { margin-top: 0; }
   .amount { font-stretch: 100%; letter-spacing: -0.03em; }
-  .close-actions, .close-actions .btn { width: 100%; }
+  .close-actions, .close-actions .btn, .close-actions .go { width: 100%; }
   .close-photo { width: 76px; height: 76px; }
   .prop-foot a { margin-left: 0; }
   .hud-chapter { font-size: 13px; }
 }
 
+/* A screen too narrow to hold both walls: it looks along one of them, and the corridor keeps the top */
+@media (max-aspect-ratio: 1 / 1) {
+  .hero-plate {
+    --fx: 80%;
+    --fy: 40%;
+    --dim: .4;
+    -webkit-mask-image: linear-gradient(#000 34%, transparent 82%);
+    mask-image: linear-gradient(#000 34%, transparent 82%);
+  }
+  .hero-plate img { top: 31svh; width: max(150svh, 256vw); }
+  .hero-lens { width: max(132vw, 66svh); opacity: calc(.55 - var(--out)); }
+  .hero-copy::before { inset-inline: -32%; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .prop.revealing { clip-path: none; animation: appear .4s ease both; }
-  .hero-brand, .hero-copy > *, .specs, .ret-ticks, .ret-cross, .flow::after, .bp .bp-scan, .credits ul, .invest-rings svg { animation: none; }
+  .hero-brand, .hero-copy::before, .hero-copy > *, .specs, .hero-plate img, .ret-ticks, .ret-cross, .flow::after, .credits ul, .invest-rings svg { animation: none; }
   .reticle polygon { animation: none; stroke-dashoffset: 0; }
   .scope-list li { opacity: 1; transition: none; }
   .credits ul { flex-wrap: wrap; width: auto; }

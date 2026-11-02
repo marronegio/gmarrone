@@ -18,6 +18,7 @@ const files = [
   { src: `${ASSETS}/giovanne-portrait.png`,        dest: `${ASSETS}/giovanne-portrait.webp`,        q: 80 },
   { src: `${ASSETS}/giovanne-portrait-mobile.png`, dest: `${ASSETS}/giovanne-portrait-mobile.webp`, q: 78 },
   { src: `${ASSETS}/logo.png`,                     dest: `${ASSETS}/logo.webp`,                     q: 90 },
+  { src: "./uploads/proposta-hero.png",            dest: `${ASSETS}/proposta-hero.webp`,            q: 86 },
   { src: `${ASSETS}/portfolio/bettina-rudolph.png`,  dest: `${ASSETS}/portfolio/bettina-rudolph.webp`,  q: 82 },
   { src: `${ASSETS}/portfolio/eduarda-costa.png`,    dest: `${ASSETS}/portfolio/eduarda-costa.webp`,    q: 82 },
   { src: `${ASSETS}/portfolio/juliane-marrone.png`,  dest: `${ASSETS}/portfolio/juliane-marrone.webp`,  q: 82 },

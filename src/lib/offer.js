@@ -136,7 +136,7 @@ export const CLIENTS = [
 export const PLANS = [
 {
   name: "Landing Page", badge: "Entrada",
-  titles: { scope: "A planta da sua *página*", path: "Do sim à *página no ar*" },
+  titles: { scope: "Sua *página,* por dentro", path: "Do sim à *página no ar*" },
   desc: "Página única focada em conversão. Ideal para captação de leads, lançamentos e campanhas pontuais.",
   summary: ["Entrega em 7 a 15 dias", "Uma página, um objetivo de conversão", "Copy, design e SEO on-page"],
   cta: "Começar meu projeto",
@@ -162,7 +162,7 @@ export const PLANS = [
 },
 {
   name: "Site Institucional", badge: "Mais escolhido", featured: true,
-  titles: { scope: "A planta do seu *site*", path: "Do sim ao *site no ar*" },
+  titles: { scope: "Seu *site,* por dentro", path: "Do sim ao *site no ar*" },
   desc: "Presença digital completa pra autoridade e geração de leads orgânicos via SEO.",
   summary: ["Entrega em 20 a 30 dias", "Múltiplas páginas, com blog", "Painel editável em WordPress"],
   cta: "Quero meu site",
@@ -187,7 +187,7 @@ export const PLANS = [
 },
 {
   name: "E-commerce", badge: "Avançado",
-  titles: { scope: "A planta da sua *loja*", path: "Do sim à *loja no ar*" },
+  titles: { scope: "Sua *loja,* por dentro", path: "Do sim à *loja no ar*" },
   desc: "Loja virtual estruturada pra vender no piloto automático, com integrações de pagamento e automação.",
   summary: ["Cronograma personalizado", "Catálogo e pagamento integrados", "Automações de carrinho e leads"],
   cta: "Solicitar projeto",
