@@ -1,16 +1,20 @@
 import React from "react";
 import { supabase } from "./supabase.js";
 import { useProposals } from "./proposals.js";
-import { Dashboard, Propostas } from "./pages.jsx";
+import { Dashboard, Leads, Propostas } from "./pages.jsx";
 
 const { useEffect, useRef, useState } = React;
 
 const NOT_CONFIGURED = "Login indisponível: faltam as variáveis do Supabase neste build.";
 
 const NAV = [
-  { href: "#/", label: "Dashboard", icon: "M4 4h7v9H4zM13 4h7v5h-7zM13 11h7v9h-7zM4 15h7v5H4z" },
-  { href: "#/propostas", label: "Propostas", icon: "M6 3h8l4 4v14H6zM14 3v4h4M9 12h6M9 16h6" },
+  { href: "#/", route: "dashboard", label: "Dashboard", icon: "M4 4h7v9H4zM13 4h7v5h-7zM13 11h7v9h-7zM4 15h7v5H4z" },
+  { href: "#/leads", route: "leads", label: "Leads", icon: "M3 13l3-8h12l3 8v6H3zM3 13h5l1.5 2.5h5L16 13h5" },
+  { href: "#/propostas", route: "propostas", label: "Propostas", icon: "M6 3h8l4 4v14H6zM14 3v4h4M9 12h6M9 16h6" },
 ];
+
+const routeOf = (hash) =>
+  hash.startsWith("#/propostas") ? "propostas" : hash.startsWith("#/leads") ? "leads" : "dashboard";
 
 function loginError(error) {
   if (error.code === "invalid_credentials") return "E-mail ou senha incorretos.";
@@ -99,7 +103,7 @@ function useHash() {
 function Shell({ email }) {
   const hash = useHash();
   const { proposals, error, load, add, move, remove } = useProposals();
-  const onPropostas = hash.startsWith("#/propostas");
+  const route = routeOf(hash);
 
   // A failed global sign-out (offline, say) must still end the session on this device.
   const signOut = async () => {
@@ -117,7 +121,7 @@ function Shell({ email }) {
         <nav className="side-nav" aria-label="Principal">
           {NAV.map((item) =>
             <a key={item.href} href={item.href}
-              aria-current={(item.href === "#/propostas") === onPropostas ? "page" : undefined}>
+              aria-current={item.route === route ? "page" : undefined}>
               <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor"
                 strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                 <path d={item.icon} />
@@ -132,16 +136,19 @@ function Shell({ email }) {
       </aside>
 
       <main className="page">
-        {error &&
-          <div className="notice" role="alert">
-            <p>{error}</p>
-            {!proposals && <button className="link" type="button" onClick={load}>Tentar de novo</button>}
-          </div>}
-        {!proposals && !error && <p className="empty" role="status">Carregando…</p>}
-        {proposals && (onPropostas ?
-          <Propostas proposals={proposals} focusEntry={hash.endsWith("/nova")}
-            onAdd={add} onMove={move} onRemove={remove} /> :
-          <Dashboard proposals={proposals} onMove={move} />)}
+        {route === "leads" ? <Leads /> :
+          <>
+            {error &&
+              <div className="notice" role="alert">
+                <p>{error}</p>
+                {!proposals && <button className="link" type="button" onClick={load}>Tentar de novo</button>}
+              </div>}
+            {!proposals && !error && <p className="empty" role="status">Carregando…</p>}
+            {proposals && (route === "propostas" ?
+              <Propostas proposals={proposals} focusEntry={hash.endsWith("/nova")}
+                onAdd={add} onMove={move} onRemove={remove} /> :
+              <Dashboard proposals={proposals} onMove={move} />)}
+          </>}
       </main>
     </div>);
 

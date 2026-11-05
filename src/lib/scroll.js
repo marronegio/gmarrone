@@ -4,6 +4,7 @@ import Lenis from "lenis";
 const subscribers = new Set();
 let lenis = null;
 let started = false;
+let held = false;
 
 export const clamp = (v, min = 0, max = 1) => Math.min(max, Math.max(min, v));
 export const prefersReducedMotion = () =>
@@ -23,7 +24,7 @@ export function startScroll() {
   const tick = (time) => {
     lenis?.raf(time);
     const y = window.scrollY;
-    subscribers.forEach((fn) => fn(y, time));
+    if (!held) subscribers.forEach((fn) => fn(y, time));
     requestAnimationFrame(tick);
   };
   requestAnimationFrame(tick);
@@ -47,6 +48,12 @@ export function startScroll() {
 export function onFrame(fn) {
   subscribers.add(fn);
   return () => subscribers.delete(fn);
+}
+
+// While a dialog covers the page nothing behind it needs drawing. The hero's WebGL would
+// otherwise repaint every frame under the dialog's blurred backdrop, and the blur with it.
+export function holdFrames(on) {
+  held = on;
 }
 
 export function lockScroll(locked) {

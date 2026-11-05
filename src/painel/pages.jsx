@@ -1,5 +1,6 @@
 import React from "react";
 import { SITE_TYPES, STAGES, money, proposalUrl, shortDate, sum } from "./proposals.js";
+import { phone, receivedAt, useLeads, whatsappUrl } from "./leads.js";
 
 const { useRef, useState } = React;
 
@@ -264,6 +265,76 @@ function Row({ proposal, onMove, onRemove }) {
           </>}
       </td>
     </tr>);
+
+}
+
+// ─── LEADS ──────────────────────────────────────────────────
+// Filled by the site's contact form; the visitor only gets the WhatsApp button after this.
+function LeadRow({ lead, onRemove }) {
+  const [confirming, setConfirming] = useState(false);
+
+  return (
+    <tr>
+      <td className="lead-name">{lead.name}</td>
+      <td className="lead-email"><a className="link" href={`mailto:${lead.email}`}>{lead.email}</a></td>
+      <td className="lead-phone">
+        <a className="link" href={whatsappUrl(lead.whatsapp)} target="_blank" rel="noopener">{phone(lead.whatsapp)}</a>
+      </td>
+      <td className="lead-source">{lead.source}</td>
+      <td className="lead-date">{receivedAt(lead.created_at)}</td>
+      <td className="list-actions">
+        {confirming ?
+          <>
+            <button className="link link-danger" type="button" onClick={() => onRemove(lead.id)}>
+              Confirmar exclusão
+            </button>
+            <button className="link" type="button" onClick={() => setConfirming(false)}>Cancelar</button>
+          </> :
+          <button className="link" type="button" onClick={() => setConfirming(true)}
+            aria-label={`Excluir lead de ${lead.name}`}>
+            Excluir
+          </button>}
+      </td>
+    </tr>);
+
+}
+
+export function Leads() {
+  const { leads, error, load, remove } = useLeads();
+
+  return (
+    <>
+      <header className="page-head">
+        <h1>Leads</h1>
+        {leads && <span className="note">{count(leads.length, "lead", "leads")}</span>}
+      </header>
+
+      {error &&
+        <div className="notice" role="alert">
+          <p>{error}</p>
+          {!leads && <button className="link" type="button" onClick={load}>Tentar de novo</button>}
+        </div>}
+      {!leads && !error && <p className="empty" role="status">Carregando…</p>}
+
+      {leads && (leads.length === 0 ?
+        <p className="empty">Nenhum lead ainda. Quem preencher o formulário de contato do site aparece aqui.</p> :
+        <table className="list leads">
+          <caption className="sr-only">Leads do formulário de contato</caption>
+          <thead>
+            <tr>
+              <th scope="col">Nome</th>
+              <th scope="col">E-mail</th>
+              <th scope="col">WhatsApp</th>
+              <th scope="col">Origem</th>
+              <th scope="col">Recebido em</th>
+              <th scope="col"><span className="sr-only">Ações</span></th>
+            </tr>
+          </thead>
+          <tbody>
+            {leads.map((lead) => <LeadRow key={lead.id} lead={lead} onRemove={remove} />)}
+          </tbody>
+        </table>)}
+    </>);
 
 }
 

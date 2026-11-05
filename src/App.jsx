@@ -3,6 +3,7 @@ import {
   Intro, Cursor, Nav, Hero, Projects, Problem, Services,
   Differentials, About, Plans, FAQ, Finale, Footer
 } from "./sections.jsx";
+import { ContactDialog } from "./contact.jsx";
 
 const { useCallback, useState } = React;
 
@@ -28,6 +29,7 @@ function App() {
         <Finale />
       </main>
       <Footer />
+      <ContactDialog />
     </>
   );
 }

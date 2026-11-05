@@ -6,6 +6,7 @@
 
 @import "./tokens.css";
 @import "./lib/device.css";
+@import "./lib/aura.css";
 
 * { box-sizing: border-box; }
 html, body { margin: 0; padding: 0; }
@@ -93,6 +94,7 @@ h1 em, h2 em { font-size: 1.08em; line-height: 0.9; }
   padding: 17px 30px;
   border-radius: 999px;
   border: 1px solid transparent;
+  background: none;
   font-size: 13px;
   font-weight: 600;
   font-stretch: 112%;
@@ -420,6 +422,7 @@ h1 em, h2 em { font-size: 1.08em; line-height: 0.9; }
   background: var(--bg-2);
   border: 1px solid var(--line);
 }
+.work-next button.work-frame { width: 100%; font: inherit; color: inherit; cursor: pointer; }
 .work-next .work-frame::after {
   content: "";
   position: absolute; inset: 0;
@@ -715,8 +718,16 @@ h1 em, h2 em { font-size: 1.08em; line-height: 0.9; }
   color: var(--ink-2);
 }
 .clients-grid img { width: 44px; height: 44px; flex: none; border-radius: 50%; object-fit: cover; background: var(--surface); }
-.clients-you a { color: var(--accent); }
-.clients-you a:hover { color: var(--ice); }
+.clients-you button {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: var(--accent);
+  cursor: pointer;
+  transition: color .2s ease;
+}
+.clients-you button:hover { color: var(--ice); }
 @media (max-width: 1080px) {
   .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .clients-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -916,6 +927,89 @@ h1 em, h2 em { font-size: 1.08em; line-height: 0.9; }
 .footer nav { display: flex; flex-wrap: wrap; gap: 8px 26px; }
 .footer a:hover { color: var(--accent); }
 .footer-end { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px 24px; margin-top: 30px; font-size: 13px; }
+
+/* ── Contact form ─────────────────────── */
+.contact {
+  width: min(100% - 32px, 460px);
+  max-width: none;
+  max-height: calc(100% - 32px);
+  margin: auto;
+  padding: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  border: 0;
+  border-radius: 20px;
+  background: var(--bg-2);
+  color: var(--ink);
+  box-shadow: 0 0 0 1px rgba(170, 205, 255, .2), 0 44px 110px -24px rgba(2, 6, 16, .9);
+  --aura-light: .6; /* dimmer than on the thank-you page: here it sits behind a form */
+}
+/* It opens through the logo's hexagon, as the page does */
+.contact[open] { animation: contact-open .8s cubic-bezier(.76, 0, .24, 1); }
+@keyframes contact-open {
+  from { clip-path: polygon(50% 50%, 50% 50%, 50% 50%, 50% 50%, 50% 50%, 50% 50%); }
+  to {
+    clip-path: polygon(50% calc(50% - 600px), calc(50% + 520px) calc(50% - 300px), calc(50% + 520px) calc(50% + 300px),
+      50% calc(50% + 600px), calc(50% - 520px) calc(50% + 300px), calc(50% - 520px) calc(50% - 300px));
+  }
+}
+.contact::backdrop {
+  background: rgba(3, 6, 14, .8);
+  -webkit-backdrop-filter: blur(7px);
+          backdrop-filter: blur(7px);
+  animation: contact-fade .4s ease both;
+}
+@keyframes contact-fade { from { opacity: 0; } }
+
+.contact-card {
+  position: relative;
+  isolation: isolate; /* keeps the aura behind the fields and above the dialog's fill */
+  overflow: hidden;
+  display: grid;
+  gap: 14px;
+  padding: clamp(26px, 5vw, 38px);
+}
+.contact h2 { padding-right: 40px; font-size: clamp(30px, 5vw, 40px); line-height: 1.08; }
+.contact-intro { margin-bottom: 6px; font-size: 16px; color: var(--ink-2); }
+.contact-x {
+  position: absolute; right: 14px; top: 14px;
+  display: grid; place-items: center;
+  width: 40px; height: 40px;
+  border: 0;
+  border-radius: 50%;
+  background: none;
+  color: var(--muted);
+  cursor: pointer;
+  transition: color .2s ease, background .2s ease;
+}
+.contact-x:hover { color: var(--ink); background: var(--surface-2); }
+.contact-x svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; }
+
+.contact-field { display: grid; gap: 6px; }
+.contact-field span { font-size: 14px; color: var(--ink-2); }
+.contact-field input {
+  width: 100%;
+  height: 50px;
+  padding: 0 14px;
+  border: 1px solid var(--line-strong);
+  border-radius: 10px;
+  background: var(--bg);
+  color: var(--ink);
+  font: inherit;
+  font-size: 16px; /* below this iOS zooms in on focus */
+  transition: border-color .2s ease;
+}
+.contact-field input::placeholder { color: var(--muted); opacity: .7; }
+.contact-field input:hover { border-color: var(--muted); }
+.contact-field input:focus-visible { outline-offset: 0; border-color: transparent; }
+/* For bots only: people never see or reach it */
+.contact-trap { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
+
+.contact-error { font-size: 14px; line-height: 1.45; color: var(--danger); }
+.contact-error a { color: var(--ink); text-decoration: underline; text-underline-offset: 3px; }
+.contact .btn { width: 100%; margin-top: 6px; }
+.contact .btn:disabled { opacity: .6; cursor: progress; }
+.contact-note { font-size: 13px; color: var(--muted); }
 
 /* ── Reduced motion ───────────────────── */
 @media (prefers-reduced-motion: reduce) {

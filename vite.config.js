@@ -12,6 +12,7 @@ export default defineConfig({
         main: fileURLToPath(new URL("index.html", import.meta.url)),
         painel: fileURLToPath(new URL("painel/index.html", import.meta.url)),
         proposta: fileURLToPath(new URL("proposta/index.html", import.meta.url)),
+        obrigado: fileURLToPath(new URL("obrigado/index.html", import.meta.url)),
       },
     },
   },

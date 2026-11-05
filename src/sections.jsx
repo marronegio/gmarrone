@@ -2,13 +2,15 @@ import React from "react";
 import { clamp, hasFinePointer, lockScroll, onFrame, prefersReducedMotion, scrollToY } from "./lib/scroll.js";
 import { createHeroGL } from "./lib/heroGL.js";
 import { DeviceFrame, crossing, deviceScreens, trackLength } from "./lib/device.jsx";
-import { CLIENTS, DIFFS, FAQS, PAYMENT_TERMS, PLANS, PROJECTS, STATS, whatsapp } from "./lib/offer.js";
+import { CLIENTS, DIFFS, FAQS, PAYMENT_TERMS, PLANS, PROJECTS, STATS } from "./lib/offer.js";
+import { ASK_PROPOSAL } from "./lib/lead.js";
 import { Title, Words, useInView } from "./lib/title.jsx";
 
 const { useState, useEffect, useLayoutEffect, useRef } = React;
 
 // ─── Helpers ────────────────────────────────────────────────
-const PROPOSAL_LINK = whatsapp("Oi Giovanne, quero solicitar uma proposta para o meu site.");
+// A contact button: it opens the form in contact.jsx, which leads on to WhatsApp.
+const lead = (source, ask = ASK_PROPOSAL) => ({ "data-lead": source, "data-ask": ask });
 
 function CountUp({ to, prefix = "", suffix = "", duration = 1500 }) {
   const [ref, inView] = useInView(0.5);
@@ -274,7 +276,7 @@ export function Hero({ revealed }) {
         </p>
         <div className="hero-actions">
           <a href="#projetos" className="btn btn-line">Projetos</a>
-          <a href={PROPOSAL_LINK} target="_blank" rel="noopener" className="btn btn-solid">Solicitar proposta</a>
+          <button type="button" className="btn btn-solid" {...lead("Topo da página")}>Solicitar proposta</button>
         </div>
         <div className="trust">
           <div className="trust-faces">
@@ -395,11 +397,11 @@ export function Projects() {
           )}
 
           <article className="work work-next" data-card>
-            <a className="work-frame" href={PROPOSAL_LINK} target="_blank" rel="noopener" data-cursor="Vamos conversar">
+            <button type="button" className="work-frame" data-cursor="Vamos conversar" {...lead("Projetos")}>
               <span className="work-next-hex" aria-hidden="true" />
               <span className="work-next-text">O próximo pode ser <em>o seu.</em></span>
               <span className="btn btn-solid">Solicitar proposta</span>
-            </a>
+            </button>
             {/* An empty meta row keeps the frame aligned with the project cards */}
             <div className="work-meta" aria-hidden="true" />
           </article>
@@ -586,7 +588,7 @@ export function About() {
             </li>
           )}
           <li className="clients-you">
-            <a href={PROPOSAL_LINK} target="_blank" rel="noopener">+ Seu negócio aqui</a>
+            <button type="button" {...lead("Clientes")}>+ Seu negócio aqui</button>
           </li>
         </ul>
       </div>
@@ -640,13 +642,12 @@ export function Plans() {
                 </p>
               </div>
 
-              <a
+              <button
+                type="button"
                 className={`btn ${plan.featured ? "btn-solid" : "btn-line"} plan-cta`}
-                href={whatsapp(`Oi Giovanne, quero solicitar uma proposta de ${plan.name}.`)}
-                target="_blank"
-                rel="noopener">
+                {...lead(`Plano ${plan.name}`, `Quero uma proposta de ${plan.name}.`)}>
                 {plan.cta}
-              </a>
+              </button>
               <p className="plan-note">{plan.note}</p>
 
               <div className="plan-includes">
@@ -678,9 +679,9 @@ export function FAQ() {
           <p className="lead">
             Dúvidas que aparecem antes da gente começar. Se a sua não está aqui, manda no WhatsApp.
           </p>
-          <a href={whatsapp("Oi Giovanne, tenho uma dúvida sobre o meu site.")} target="_blank" rel="noopener" className="btn btn-line">
+          <button type="button" className="btn btn-line" {...lead("Dúvidas", "Tenho uma dúvida sobre o meu site.")}>
             Tirar dúvida no WhatsApp
-          </a>
+          </button>
         </div>
         <div className="faq-list">
           {FAQS.map((item, i) =>
@@ -745,10 +746,10 @@ export function Finale() {
           <p>
             Me conta sobre o seu negócio e o que você precisa. Te respondo com escopo, prazo e valor, direto no WhatsApp.
           </p>
-          <a href={PROPOSAL_LINK} target="_blank" rel="noopener" className="btn btn-solid">
+          <button type="button" className="btn btn-solid" {...lead("Fim da página")}>
             <Icon name="whatsapp" />
             Falar com Giovanne no WhatsApp
-          </a>
+          </button>
           <small>Resposta em até 2 horas em horário comercial.</small>
         </div>
         <Blades />
