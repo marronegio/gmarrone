@@ -140,7 +140,7 @@ export function Hero({ proposal, plan, reference, headingRef }) {
 // ─── THE IDEA — words light up as the reader passes them ────
 const FLOW = [
   { t: "Visita", d: "Alguém encontra você no Google ou numa campanha." },
-  { t: "Interesse", d: "Copy e design seguram a atenção e comunicam autoridade." },
+  { t: "Interesse", d: "A página explica o que você faz e por que dá pra confiar em você." },
   { t: "Ação", d: "O visitante agenda, compra ou chama no WhatsApp." },
 ];
 
@@ -149,7 +149,7 @@ export function Idea({ client }) {
   const flowRef = useScrub();
 
   const lead = client.split(/\s+/);
-  const rest = "eu não entrego site bonito. Entrego estrutura de conversão: cada elemento da página é pensado pra fazer o visitante tomar uma ação.".split(" ");
+  const rest = "antes de pensar no visual, eu penso em quem vai entrar no seu site: o que essa pessoa procura e o que ela precisa ler pra escolher você.".split(" ");
   const total = lead.length + rest.length;
   const word = (text, i, end = " ") =>
     <span className="lit" key={i} style={{ "--i": i / total }}>{text}{end}</span>;
@@ -209,8 +209,8 @@ export function Scope({ plan, client }) {
         <header className="scope-head">
           <Title text={plan.titles.scope} />
           <div>
-            <p className="lead">Tudo o que entra no projeto, parte por parte. Role a página e veja onde cada item aparece.</p>
-            <p className="scope-note">Simulação ilustrativa. O design do seu projeto é criado do zero.</p>
+            <p className="lead">Aqui está tudo o que entra no projeto. Conforme você rola, a simulação mostra onde cada item aparece.</p>
+            <p className="scope-note">É só uma simulação. O design do seu projeto eu faço do zero.</p>
           </div>
         </header>
 
@@ -309,8 +309,8 @@ export function Reel() {
       <div className="reel-stage" ref={stageRef}>
         <div className="reel-track" ref={trackRef}>
           <div className="reel-intro">
-            <Title text="Sites reais, *resultados reais.*" />
-            <p className="lead">Cada projeto foi pensado do zero pra atender o posicionamento do cliente e converter o público certo.</p>
+            <Title text="Alguns projetos *no ar*" />
+            <p className="lead">Cada um foi escrito e desenhado do zero pro público daquele cliente.</p>
           </div>
 
           {REEL.map((project) =>
@@ -375,8 +375,8 @@ export function Author() {
 
       <div className="wrap author-grid">
         <div className="author-copy">
-          <Title text="Sou Giovanne, web designer focado em *resultado mensurável.*" />
-          <p className="lead">Não vendo "presença digital". Vendo páginas que convertem visitante em cliente pagante.</p>
+          <Title text="Quem vai fazer o seu *projeto*" />
+          <p className="lead">Sou Giovanne, web designer. Pra mim, um site só deu certo quando começa a trazer cliente pro seu negócio.</p>
         </div>
 
         <ul className="diffs" ref={diffsRef}>
@@ -415,7 +415,7 @@ export function Path({ plan, deposit, balance }) {
 
   const steps = [
     { t: "Aprovação", d: "Você aprova aqui na proposta, recebe o contrato e paga os primeiros 50%.", pay: deposit },
-    { t: "Alinhamento", d: "Entendo seu posicionamento, público e oferta. O prazo fica combinado por escrito." },
+    { t: "Alinhamento", d: "A gente conversa sobre o seu negócio e sobre quem compra de você. É daí que sai o texto." },
     { t: "Copy e design", d: "Escrevo o texto do zero e desenho o layout com a identidade do seu negócio." },
     { t: "Integrações e SEO", d: "Conecto suas ferramentas e deixo a estrutura técnica pronta pro Google." },
     { t: "Entrega", d: plan?.handover ?? "Você paga os outros 50% e seu projeto vai pro ar.", pay: balance },
@@ -425,7 +425,7 @@ export function Path({ plan, deposit, balance }) {
     <section className="sec path" id="caminho" data-chapter="Como vai ser">
       <div className="wrap">
         <Title className="center" text={plan?.titles.path ?? "Do sim ao projeto *no ar*"} />
-        {plan && <p className="path-total">{plan.summary[0]}. Todo prazo é alinhado antes do início, por escrito.</p>}
+        {plan && <p className="path-total">{plan.summary[0]}. A data exata a gente fecha por escrito antes de começar.</p>}
 
         <div className="steps" ref={ref}>
           <span className="steps-rail" aria-hidden="true"><i /></span>
@@ -471,7 +471,7 @@ function Amount({ value }) {
 
 }
 
-const PROMISES = ["Sem taxas escondidas", "Sem mensalidades obrigatórias", "SEO incluso, sem custo extra"];
+const PROMISES = ["Sem taxas escondidas", "Sem mensalidades obrigatórias", "SEO incluso no valor"];
 
 export function Investment({ budget, deposit, balance }) {
   const ref = useScrub();
@@ -583,13 +583,13 @@ export function Finale({ approval, ask }) {
             <h2>Proposta <em className="yes">aprovada!</em></h2> :
             <h2>Vamos <em>começar?</em></h2>}
           <p className="lead">{approval.approved ?
-            "Em breve você receberá o contrato para começarmos oficialmente o projeto." :
-            "Aprovando agora, você recebe o contrato e a gente começa oficialmente o projeto."}</p>
+            "Eu te mando o contrato em breve e a gente marca a primeira conversa." :
+            "Aprovou, eu te mando o contrato e a gente marca a primeira conversa."}</p>
           <div className="close-actions">
             <ApproveButton approval={approval} label="Aprovar proposta" done="Proposta aprovada" />
             <a className="btn btn-line" href={ask} target="_blank" rel="noopener">Tirar uma dúvida</a>
           </div>
-          <small>Dúvidas respondidas em até 2 horas em horário comercial.</small>
+          <small>Respondo dúvidas em até 2 horas, em horário comercial.</small>
         </div>
         {!still &&
           <div className="iris-blades" aria-hidden="true">

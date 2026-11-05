@@ -206,7 +206,7 @@ export function ApprovalDialog({ approval, oops, contact }) {
             <path pathLength="1" d="M33 51l12 12 23-25" />
           </svg>
           <h2 id="approval-title">Proposta <em>aprovada!</em></h2>
-          <p className="lead">Em breve você receberá o contrato para começarmos oficialmente o projeto.</p>
+          <p className="lead">Eu te mando o contrato em breve e a gente marca a primeira conversa.</p>
           <button className="btn" type="button" onClick={() => dialogRef.current.close()}>Entendi</button>
           <a className="approval-oops" href={oops} target="_blank" rel="noopener">Aprovou sem querer? Me avise no WhatsApp.</a>
         </div>}

@@ -3,7 +3,7 @@
 export const whatsapp = (message) =>
   `https://wa.me/5551996574342?text=${encodeURIComponent(message)}`;
 
-export const PAYMENT_TERMS = "50% na contratação e 50% na entrega. Sem taxas escondidas, sem mensalidades obrigatórias.";
+export const PAYMENT_TERMS = "50% na contratação e 50% na entrega. Não tem taxa escondida nem mensalidade obrigatória.";
 
 export const STATS = [
 { to: 30, prefix: "+", label: "profissionais já confiaram no meu trabalho" },
@@ -13,10 +13,10 @@ export const STATS = [
 
 
 export const DIFFS = [
-{ t: "*Foco em conversão,* não em vaidade", d: "Métrica que importa é lead na sua agenda. Site bonito sem resultado é só portfólio caro." },
-{ t: "SEO *incluso* em todo projeto", d: "Sem custo extra, sem upsell. Estrutura técnica pra você aparecer no Google desde o dia 1." },
-{ t: "*Transparência* total", d: "Se você não precisa de um site novo, eu falo. Prefiro perder a venda a entregar algo que não vai te servir." },
-{ t: "Experiência com *grandes players*", d: "A mesma estrutura usada em projetos que faturam milhões, aplicada ao tamanho do seu negócio." }];
+{ t: "*Conversão* em primeiro lugar", d: "Eu olho pra quantas pessoas o site leva até a sua agenda. O visual entra pra ajudar nisso." },
+{ t: "SEO *incluso* em todo projeto", d: "Já vem no valor. Eu deixo a parte técnica pronta pra você aparecer no Google desde a publicação." },
+{ t: "Se não precisa, *eu falo*", d: "Se o seu site atual dá conta, eu digo. Prefiro perder a venda a te entregar algo que não vai servir." },
+{ t: "Experiência com *grandes players*", d: "Já fiz páginas pra Bettina Rudolph, Gerônimo Theml e IGT Coaching. Levo o que funciona nesses projetos pro tamanho do seu negócio." }];
 
 
 export const PROJECTS = [
@@ -107,11 +107,11 @@ export const FAQS = [
 },
 {
   q: "Vou ficar dependente de você pra mexer no site depois?",
-  a: "Não. Entrego o acesso completo ao painel, com treinamento básico pra você editar textos, imagens e produtos sozinho. Suporte continuado é opcional, não obrigatório."
+  a: "Não. Entrego o acesso completo ao painel, com treinamento básico pra você editar textos, imagens e produtos sozinho. Se quiser suporte depois, a gente combina à parte."
 },
 {
   q: "Sites baratos no Wix ou template pronto não resolvem?",
-  a: "Resolvem se você quer só \"existir na internet\". Não resolvem se você quer que o site traga cliente. Template pronto não tem estrutura de conversão, copy estratégica nem SEO bem feito — e é por isso que a maioria dos profissionais paga barato uma vez e nunca vê retorno."
+  a: "Resolvem se você só quer ter um endereço na internet. Se a ideia é o site trazer cliente, quase nunca: o template vem com texto genérico e ninguém pensou no seu público quando montou a página. Sai barato, mas não volta nada."
 },
 {
   q: "E se meu site atual estiver bom? Preciso refazer?",
@@ -137,7 +137,7 @@ export const PLANS = [
 {
   name: "Landing Page", badge: "Entrada",
   titles: { scope: "Sua *página,* por dentro", path: "Do sim à *página no ar*" },
-  desc: "Página única focada em conversão. Ideal para captação de leads, lançamentos e campanhas pontuais.",
+  desc: "Uma página com um único objetivo, como captar contatos ou vender um lançamento.",
   summary: ["Entrega em 7 a 15 dias", "Uma página, um objetivo de conversão", "Copy, design e SEO on-page"],
   cta: "Começar meu projeto",
   note: "Ponto de partida pra captar leads",
@@ -151,19 +151,19 @@ export const PLANS = [
 
   // One line per item of `includes`, in the same order; the proposal page shows them side by side
   details: [
-  "Escrita do zero com base no seu posicionamento, público e oferta. Não é template traduzido.",
-  "Alinhado à identidade visual do seu negócio, não a uma estética genérica de Wix.",
-  "Pra você aparecer no Google sem depender de tráfego pago. Sem custo extra, sem upsell.",
-  "Conectada no projeto, pra visita interessada virar conversa com você.",
-  "Mobile-first. Funciona perfeitamente em qualquer dispositivo.",
-  "Pra ranquear melhor no Google e segurar o visitante na página."],
+  "Escrevo do zero, a partir do que você vende e de quem compra de você.",
+  "Desenhado em cima da identidade visual do seu negócio.",
+  "Pra você aparecer no Google sem depender só de anúncio. Já está no valor.",
+  "Quem gostou da página fala com você no WhatsApp em um toque.",
+  "Desenho primeiro pro celular, que é onde a maioria das pessoas vai abrir a página.",
+  "Página lenta perde visita e posição no Google. Eu otimizo imagens e código pra ela abrir rápido."],
 
   handover: "Você paga os outros 50% e sua página vai pro ar."
 },
 {
   name: "Site Institucional", badge: "Mais escolhido", featured: true,
   titles: { scope: "Seu *site,* por dentro", path: "Do sim ao *site no ar*" },
-  desc: "Presença digital completa pra autoridade e geração de leads orgânicos via SEO.",
+  desc: "Várias páginas e um blog, pra quem procura o seu serviço no Google chegar até você e confiar no que vê.",
   summary: ["Entrega em 20 a 30 dias", "Múltiplas páginas, com blog", "Painel editável em WordPress"],
   cta: "Quero meu site",
   note: "O projeto mais escolhido pelos meus clientes",
@@ -176,19 +176,19 @@ export const PLANS = [
   "Treinamento básico pra editar sozinho"],
 
   details: [
-  "Presença digital completa, pensada pra construir autoridade e gerar leads orgânicos.",
-  "Estrutura técnica pra você aparecer no Google desde o dia 1.",
-  "Texto escrito do zero, design alinhado à sua identidade e estrutura pronta pro Google.",
+  "Uma página pra cada serviço ou assunto importante, e cada uma com um objetivo claro.",
+  "Cada artigo é mais uma chance de alguém te achar no Google.",
+  "Escrevo o texto, desenho as páginas na sua identidade e cuido da parte técnica pro Google.",
   "Acesso completo pra você editar textos e imagens sozinho.",
-  "As ferramentas que você já usa, conectadas no projeto.",
-  "Você aprende a mexer no site. Suporte continuado é opcional, não obrigatório."],
+  "Formulário e WhatsApp ligados às ferramentas que você já usa.",
+  "Você aprende a mexer no site sozinho. Se quiser suporte depois, a gente combina à parte."],
 
   handover: "Você paga os outros 50% e recebe o site no ar, com acesso ao painel e treinamento básico."
 },
 {
   name: "E-commerce", badge: "Avançado",
   titles: { scope: "Sua *loja,* por dentro", path: "Do sim à *loja no ar*" },
-  desc: "Loja virtual estruturada pra vender no piloto automático, com integrações de pagamento e automação.",
+  desc: "Loja virtual com catálogo, pagamento sem sair da página e lembrete pra quem abandona o carrinho.",
   summary: ["Cronograma personalizado", "Catálogo e pagamento integrados", "Automações de carrinho e leads"],
   cta: "Solicitar projeto",
   note: "Prazo alinhado por escrito antes de começar",
@@ -201,12 +201,12 @@ export const PLANS = [
   "Treinamento básico pra editar sozinho"],
 
   details: [
-  "Loja virtual estruturada pra vender no piloto automático.",
-  "Pagamento integrado à loja, sem desvio pro cliente no meio da compra.",
-  "Automações que trabalham no carrinho e nos leads enquanto você atende.",
-  "Pra cada produto aparecer no Google sem depender de tráfego pago.",
+  "Seus produtos organizados em categorias, do jeito que o seu cliente procura.",
+  "O cliente paga sem sair da loja.",
+  "Quem abandona o carrinho recebe um lembrete. Quem deixa o contato fica salvo pra você.",
+  "Pra cada produto aparecer no Google sem depender só de anúncio.",
   "Você edita textos, imagens e produtos sozinho.",
-  "Você aprende a mexer na loja. Suporte continuado é opcional, não obrigatório."],
+  "Você aprende a mexer na loja sozinho. Se quiser suporte depois, a gente combina à parte."],
 
   handover: "Você paga os outros 50% e recebe a loja no ar, com acesso ao painel e treinamento básico."
 }];
