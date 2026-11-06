@@ -21,3 +21,8 @@ enable_signup = true
 enable_confirmations = true
 max_frequency = "1m0s"
 otp_length = 8
+
+# Called by the public site with the publishable key, which is not a JWT.
+# The function checks the lead itself (see its header).
+[functions.meta-lead]
+verify_jwt = false

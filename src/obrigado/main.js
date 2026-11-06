@@ -1,7 +1,15 @@
 import "./obrigado.css";
-import { contactLink, firstName, readLead } from "../lib/lead.js";
+import { contactLink, firstName, readLead, saveLead } from "../lib/lead.js";
+import { startPixel, trackLead } from "../lib/meta.js";
 
 const lead = readLead();
+
+startPixel();
+// Once per form sent: a reload of this page must not count a second Lead.
+if (lead?.eventId) {
+  trackLead(lead.eventId);
+  saveLead({ ...lead, eventId: null });
+}
 
 if (lead?.name) {
   const name = document.createElement("em");

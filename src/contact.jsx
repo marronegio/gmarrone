@@ -1,6 +1,7 @@
 import React from "react";
 import { holdFrames, lockScroll } from "./lib/scroll.js";
 import { contactLink, saveLead, submitLead } from "./lib/lead.js";
+import { newEventId, sendServerLead } from "./lib/meta.js";
 
 const { useEffect, useRef, useState } = React;
 
@@ -65,14 +66,18 @@ export function ContactDialog() {
     const lead = { name: fields.name.trim(), email: fields.email.trim(), phone: phone.replace(/\D/g, ""), source: topic.source };
     setBusy(true);
     setFailed(false);
+    const human = !fields.company; // only bots fill the hidden field
     try {
-      if (!fields.company) await submitLead(lead); // only bots fill the hidden field
+      if (human) await submitLead(lead);
     } catch {
       setBusy(false);
       setFailed(true);
       return;
     }
-    saveLead({ name: lead.name, ask: topic.ask });
+    // The thank-you page sends the browser half of this Lead with the same id.
+    const eventId = human ? newEventId() : null;
+    if (eventId) sendServerLead(eventId, lead);
+    saveLead({ name: lead.name, ask: topic.ask, eventId });
     window.location.assign("obrigado/");
   };
 
